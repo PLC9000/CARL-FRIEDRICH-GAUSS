@@ -63,7 +63,7 @@ class RecommendationRequest(BaseModel):
     """
     symbol: str = Field(examples=["BTCUSDT"], description="Par de trading en Binance. Ej: BTCUSDT, ETHFDUSD.")
     interval: str = Field(examples=["1h"], description="Intervalo de cada vela: 1m, 5m, 15m, 1h, 4h, 1d.")
-    strategy: Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] = Field(description="Estrategia: A-I.")
+    strategy: Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"] = Field(description="Estrategia: A-M.")
     last_n_days: int | None = Field(default=None, ge=1, le=365, description="Días hacia atrás a analizar.", examples=[7])
     start: str | None = Field(default=None, description="Fecha inicio (AAAA-MM-DD).", examples=["2025-01-01"])
     end: str | None = Field(default=None, description="Fecha fin (AAAA-MM-DD).", examples=["2025-01-31"])
@@ -308,8 +308,8 @@ class AnalyticsOut(BaseModel):
 
 class StrategyConfig(BaseModel):
     """Configuración de una estrategia dentro de una receta."""
-    strategy: Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] = Field(
-        description="ID de estrategia: A-K.")
+    strategy: Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"] = Field(
+        description="ID de estrategia: A-M.")
     weight: float = Field(default=0, ge=0, le=100,
         description="Peso en porcentaje (0-100). La suma de pesos debe ser 100%.")
     role: Literal["direction", "strength"] = Field(default="direction",
