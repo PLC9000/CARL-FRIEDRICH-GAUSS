@@ -1,6 +1,6 @@
 databases:
   - name: bottrading-db
-    plan: starter
+    plan: basic-256mb
     databaseName: bottrading
     user: bottrading
     region: frankfurt
