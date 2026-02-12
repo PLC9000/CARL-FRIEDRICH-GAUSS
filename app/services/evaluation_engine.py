@@ -23,6 +23,12 @@ from app.models import (
 from app.binance_client import fetch_candles
 from app.strategies import STRATEGY_MAP
 from app.services.setup_service import get_enabled_strategy_keys
+from app.services.market_data_service import prefetch_market_data
+from app.services.claude_outcome_service import (
+    backfill_outcomes,
+    get_recent_outcomes,
+    record_prediction,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -265,6 +271,23 @@ async def _evaluate_recipe(recipe: Recipe, db: Session, enabled_keys: set[str] |
         logger.warning("Candle fetch failed for recipe %d: %s", recipe.id, exc)
         return None
 
+    # ── Pre-fetch extra data for Strategy M (Claude AI) ─────────────
+    _has_m = any(s["strategy"] == "M" for s in recipe.strategies)
+    _market_data: dict | None = None
+    if _has_m:
+        try:
+            _market_data = await prefetch_market_data(recipe.symbol)
+            # Back-fill past prediction outcomes & gather learning history
+            current_px = float(candles[-1][4]) if candles else 0.0
+            if current_px > 0:
+                backfill_outcomes(db, recipe.symbol, current_px)
+            _market_data["past_outcomes"] = get_recent_outcomes(db, recipe.symbol)
+            from app.config import get_settings as _gs
+            _market_data["anthropic_api_key"] = _gs().anthropic_api_key
+        except Exception as exc:
+            logger.warning("Pre-fetch for Strategy M failed: %s", exc)
+            _market_data = None
+
     strategy_results = []
     for strat_config in recipe.strategies:
         strat_key = strat_config["strategy"]
@@ -283,7 +306,11 @@ async def _evaluate_recipe(recipe: Recipe, db: Session, enabled_keys: set[str] |
 
         params = None
         if recipe.strategy_params and strat_key in recipe.strategy_params:
-            params = recipe.strategy_params[strat_key]
+            params = dict(recipe.strategy_params[strat_key])
+        # Inject market data for Strategy M
+        if strat_key == "M" and _market_data:
+            params = params or {}
+            params["_market_data"] = _market_data
 
         try:
             result = strategy_fn(candles, params=params)
@@ -292,6 +319,24 @@ async def _evaluate_recipe(recipe: Recipe, db: Session, enabled_keys: set[str] |
                 "Strategy %s failed for recipe %d: %s", strat_key, recipe.id, exc
             )
             continue
+
+        # Record Claude AI prediction for learning loop
+        if strat_key == "M" and result["recommendation"] != "NO-TRADE":
+            try:
+                metrics = result.get("metrics") or {}
+                record_prediction(
+                    db,
+                    recipe_id=recipe.id,
+                    symbol=recipe.symbol,
+                    interval=recipe.interval,
+                    direction=metrics.get("direction", 0),
+                    intensity=metrics.get("intensity", 0),
+                    confidence=metrics.get("ai_confidence", 0),
+                    entry_price=result.get("entry") or 0.0,
+                    reasoning=result.get("explanation", ""),
+                )
+            except Exception as exc:
+                logger.warning("Failed to record Claude prediction: %s", exc)
 
         score = normalize_score(result["recommendation"], result["confidence"])
 

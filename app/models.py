@@ -244,6 +244,29 @@ class BacktestResult(Base):
     recipe = relationship("Recipe")
 
 
+class ClaudeOutcome(Base):
+    """Stores Claude AI predictions and actual outcomes for in-context learning."""
+    __tablename__ = "claude_outcomes"
+    __table_args__ = (
+        Index("ix_claude_outcomes_symbol_time", "symbol", "predicted_at"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)
+    symbol = Column(String(20), nullable=False)
+    interval = Column(String(5), nullable=False)
+    direction = Column(Integer, nullable=False)        # -100 to +100
+    intensity = Column(Integer, nullable=False)         # 0 to 100
+    confidence = Column(Integer, nullable=False)        # 0 to 100
+    entry_price = Column(Float, nullable=False)
+    reasoning = Column(Text, nullable=True)
+    actual_return_pct = Column(Float, nullable=True)    # filled when outcome known
+    outcome = Column(String(10), nullable=True)         # CORRECT / WRONG / NEUTRAL
+    predicted_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+
+    recipe = relationship("Recipe")
+
+
 class StrategyConfig(Base):
     __tablename__ = "strategy_configs"
 

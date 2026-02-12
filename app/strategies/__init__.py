@@ -10,6 +10,7 @@ from app.strategies.strategy_i_atr_trailing import run_strategy_i
 from app.strategies.strategy_j_adx import run_strategy_j
 from app.strategies.strategy_k_fng import run_strategy_k
 from app.strategies.strategy_l_ema_slope import run_strategy_l
+from app.strategies.strategy_m_claude_ai import run_strategy_m
 
 STRATEGY_MAP = {
     "A": run_strategy_a,
@@ -24,6 +25,7 @@ STRATEGY_MAP = {
     "J": run_strategy_j,
     "K": run_strategy_k,
     "L": run_strategy_l,
+    "M": run_strategy_m,
 }
 
 # ── Strategy registry metadata ───────────────────────────────────────
@@ -637,6 +639,77 @@ STRATEGY_REGISTRY = {
                 "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
                 "desc": "Distancia del take-profit como multiplo de la volatilidad.",
                 "tip": "Con pendiente fuerte (factor alto), podes ser ambicioso (3.0-5.0). Con pendiente suave, un TP moderado (2.0-2.5) es mas realista.",
+            },
+        },
+    },
+    "M": {
+        "key": "M",
+        "name": "Claude AI (Analisis Puro)",
+        "icon": "\U0001f9e0",
+        "category": "Inteligencia Artificial",
+        "short_desc": "IA de Anthropic analiza datos crudos del mercado sin indicadores tecnicos tradicionales.",
+        "long_desc": (
+            "Esta estrategia es completamente diferente a todas las demas: NO usa "
+            "indicadores tecnicos (ni EMA, ni RSI, ni MACD, ni nada). En su lugar, "
+            "envia los datos CRUDOS del mercado (precios, volumenes, libro de ordenes, "
+            "estadisticas de 24h) directamente a Claude, la IA de Anthropic, y le pide "
+            "que analice patrones, anomalias y dinamicas que un indicador clasico no "
+            "detectaria. Claude produce tres senales: Direccion (-100 a +100, que tan "
+            "alcista o bajista ve el mercado), Intensidad (0-100, que tan fuerte es el "
+            "movimiento esperado) y Confianza (0-100, que tan segura esta la IA). "
+            "Ademas, APRENDE de sus predicciones pasadas: cada vez que evalua, ve su "
+            "historial reciente con los resultados reales, lo que le permite ajustar "
+            "sus estimaciones en tiempo real (in-context learning)."
+        ),
+        "when_works": "Cuando el mercado tiene patrones sutiles que los indicadores clasicos no capturan: anomalias de volumen, cambios en la microestructura del order book, correlaciones temporales inusuales. Ideal como complemento de estrategias tecnicas para agregar una perspectiva diferente.",
+        "when_fails": "En mercados extremadamente erraticos o con muy pocos datos historicos. Tambien depende de la disponibilidad de la API de Anthropic (si el servicio esta caido, retorna NO-TRADE). El costo de la API es un factor a considerar en evaluaciones muy frecuentes.",
+        "example": "Claude analiza 50 velas de BTC/USDT, ve que el volumen esta aumentando mientras el precio esta lateral, el order book tiene mas bids que asks, y en sus ultimas 3 predicciones acerto la direccion. Produce: direction=+55, intensity=70, confidence=75, recomendando COMPRAR con confianza 55%.",
+        "default_params": {
+            "claude_model": {
+                "value": "claude-haiku-4-5-20251001",
+                "options": ["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
+                "desc": "Modelo de Claude a usar para el analisis.",
+                "tip": "Haiku es rapido y barato (~$0.0005/llamada). Sonnet es mas inteligente pero 20x mas caro (~$0.01/llamada). Empeza con Haiku.",
+            },
+            "temperature": {
+                "value": 0.2, "min": 0.0, "max": 1.0, "step": 0.1,
+                "desc": "Creatividad del modelo. Valores bajos = mas conservador y consistente.",
+                "tip": "0.2 es ideal para analisis financiero (conservador). Con 0.5+ es mas 'creativo' en sus interpretaciones, lo cual puede ser bueno o malo. No subas de 0.7.",
+            },
+            "lookback_candles": {
+                "value": 50, "min": 20, "max": 200,
+                "desc": "Cuantas velas recientes se incluyen en el analisis.",
+                "tip": "50 es un buen balance entre contexto y costo de tokens. Con 20 ve menos historia pero es mas rapido. Con 100+ tiene mas contexto pero cuesta mas y puede ser mas lento.",
+            },
+            "include_depth": {
+                "value": True,
+                "desc": "Incluir datos del libro de ordenes (bid/ask, spread, imbalance) en el analisis.",
+                "tip": "MUY recomendado. El order book da informacion sobre presion compradora/vendedora que el precio no muestra. Solo desactivalo si queres reducir costos.",
+            },
+            "include_24hr": {
+                "value": True,
+                "desc": "Incluir estadisticas de 24 horas (cambio%, rango, VWAP, trades) en el analisis.",
+                "tip": "Recomendado. Da contexto sobre el dia completo. Desactivalo solo para reducir tokens.",
+            },
+            "history_window": {
+                "value": 10, "min": 0, "max": 30,
+                "desc": "Cuantas predicciones pasadas (con sus resultados) se incluyen para aprendizaje.",
+                "tip": "10 es un buen balance. Con 0 desactivas el aprendizaje (cada evaluacion es independiente). Con 20-30 Claude tiene mas contexto historico pero el prompt es mas largo.",
+            },
+            "direction_deadzone": {
+                "value": 10, "min": 0, "max": 50,
+                "desc": "Zona muerta: si |direccion| < este valor, la estrategia dice ESPERAR.",
+                "tip": "Con 10, Claude necesita estar al menos 10% seguro de una direccion para generar senal. Con 0 siempre genera senal. Con 30+ solo opera con direcciones muy claras.",
+            },
+            "sl_multiplier": {
+                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
+                "desc": "Distancia del stop-loss como multiplo de la volatilidad (ATR).",
+                "tip": "Claude a veces da senales sutiles, asi que un SL de 1.5-2.0 es razonable para darle espacio.",
+            },
+            "tp_multiplier": {
+                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
+                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
+                "tip": "Si Claude da alta confianza e intensidad, podes ser ambicioso (3.0-5.0). Si es moderada, 2.0-2.5 es mas seguro.",
             },
         },
     },

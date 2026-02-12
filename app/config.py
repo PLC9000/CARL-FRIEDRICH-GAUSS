@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./trading.db"
 
+    # Anthropic (Claude AI — Strategy M)
+    anthropic_api_key: str = ""
+
     # Trading
     commission_pct: float = 0.1  # Binance spot fee per trade (0.1% = standard)
 
