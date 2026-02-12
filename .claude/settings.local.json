@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m pip install:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(python3:*)",
+      "Bash(__NEW_LINE_6ff44748c213ba9c__ echo \"\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/approval/1/approve -H \"Content-Type: application/json\" -H \"Authorization: Bearer $ADMIN_TOKEN\" -d '{\"\"reason\"\":\"\"Metrics look reasonable for paper test\"\"}')",
+      "Bash(__NEW_LINE_b93a116b97c4d1f3__ echo \"\")",
+      "Bash(curl:*)",
+      "Bash(kill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs:*)",
+      "Bash(__NEW_LINE_7fb4a7c7d27ce443__ echo \"\")",
+      "Bash(__NEW_LINE_968144a00035c878__ echo -e \"\\\\n=== Frontend verification ===\")",
+      "WebSearch",
+      "Bash(python -m pytest tests/ -v)",
+      "WebFetch(domain:developers.binance.com)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo1LCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3NzA0MTUyNTd9.CeC_42Ge3XicioLNi_Km1bItz5fRVRnlG0LnaVShq3M\")",
+      "Bash(ls:*)",
+      "Bash(node --check:*)",
+      "Bash(/usr/local/bin/node:*)",
+      "Bash(# Verify cache headers curl -sI http://localhost:8000/)",
+      "Bash(__NEW_LINE_286cc207c6ef2a7f__ echo \"=== Test 2: Estrategia invalida ===\")",
+      "Bash(sqlite3:*)",
+      "Bash(grep:*)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(# Kill the old competing servers kill 17903 18569 sleep 1 # Verify only port 8000 remains ps aux)",
+      "Bash(python:*)",
+      "Bash(pkill:*)",
+      "Bash(xxd:*)",
+      "Bash(gtimeout 8 python3:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
