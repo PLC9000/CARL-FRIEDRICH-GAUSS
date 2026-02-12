@@ -78,13 +78,13 @@ class TestStrategyA:
             assert len(r_custom["metrics"]["ar_coefficients"]) == 2
             assert len(r_default["metrics"]["ar_coefficients"]) == 4
 
-    def test_custom_sl_tp_multiplier(self):
+    def test_sl_tp_computed(self):
+        """SL/TP are now hardcoded (recipe controls final values)."""
         candles = _make_candles(_trending_up())
-        r1 = run_strategy_a(candles, params={"sl_multiplier": 1.0, "tp_multiplier": 4.0})
-        r2 = run_strategy_a(candles, params={"sl_multiplier": 2.0, "tp_multiplier": 1.5})
-        if r1["stop_loss"] and r2["stop_loss"]:
-            # Larger SL multiplier → further from entry
-            assert abs(r2["entry"] - r2["stop_loss"]) > abs(r1["entry"] - r1["stop_loss"])
+        r = run_strategy_a(candles)
+        if r["recommendation"] != "NO-TRADE":
+            assert r["stop_loss"] is not None
+            assert r["take_profit"] is not None
 
     def test_none_params_backward_compat(self):
         candles = _make_candles(_trending_up())

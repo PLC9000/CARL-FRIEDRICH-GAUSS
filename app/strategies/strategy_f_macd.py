@@ -18,8 +18,6 @@ DEFAULTS = {
     "slow": 26,
     "signal": 9,
     "trigger": "cross",  # "cross" or "histogram"
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -29,8 +27,6 @@ def run_strategy_f(candles: np.ndarray, params: dict | None = None) -> dict:
     slow_p = int(p["slow"])
     signal_p = int(p["signal"])
     trigger = str(p["trigger"]).lower()
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     closes = candles[:, 4].astype(float)
     min_len = slow_p + signal_p + 2
@@ -85,7 +81,7 @@ def run_strategy_f(candles: np.ndarray, params: dict | None = None) -> dict:
 
     atr = simple_atr(candles)
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, 1.5, 2.5)
 
     return {
         "recommendation": signal,

@@ -71,11 +71,12 @@ class RecommendationRequest(BaseModel):
         default=None,
         description=(
             "Parámetros avanzados de la estrategia (opcional). "
-            "A: ar_order, forecast_horizon, return_threshold, sl_multiplier, tp_multiplier. "
-            "B: process_noise, measurement_noise, trend_threshold, volatility_cap, sl_multiplier, tp_multiplier. "
-            "C: lookback, z_threshold, vol_regime_multiplier, sl_multiplier, tp_multiplier."
+            "A: ar_order, forecast_horizon, return_threshold. "
+            "B: process_noise, measurement_noise, trend_threshold, volatility_cap. "
+            "C: lookback, z_threshold, vol_regime_multiplier. "
+            "SL/TP se controlan a nivel de receta."
         ),
-        examples=[{"sl_multiplier": 2.0, "tp_multiplier": 3.0}],
+        examples=[{"ar_order": 4, "return_threshold": 0.5}],
     )
 
     @field_validator("interval")

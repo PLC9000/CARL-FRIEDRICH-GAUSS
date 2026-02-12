@@ -22,8 +22,6 @@ DEFAULTS = {
     "adx_threshold": 25,    # ADX must be above this to signal a trend
     "di_confirm": 1,        # candles +DI must stay above -DI (or vice versa)
     "require_rising": False, # only signal if ADX is rising (strengthening)
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -79,8 +77,6 @@ def run_strategy_j(candles: np.ndarray, params: dict | None = None) -> dict:
     threshold = float(p["adx_threshold"])
     confirm = int(p["di_confirm"])
     require_rising = bool(p["require_rising"])
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     highs = candles[:, 2].astype(float)
     lows = candles[:, 3].astype(float)
@@ -131,7 +127,7 @@ def run_strategy_j(candles: np.ndarray, params: dict | None = None) -> dict:
     atr_val = float(atr_arr[-1]) if not np.isnan(atr_arr[-1]) else 0
 
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, 1.5, 2.5)
 
     trend_str = (
         "fuerte alcista" if adx_now >= 50 and plus_now > minus_now

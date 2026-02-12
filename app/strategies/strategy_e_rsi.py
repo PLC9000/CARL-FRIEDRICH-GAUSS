@@ -17,8 +17,6 @@ DEFAULTS = {
     "rsi_period": 14,
     "overbought": 70,
     "oversold": 30,
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -51,8 +49,6 @@ def run_strategy_e(candles: np.ndarray, params: dict | None = None) -> dict:
     period = int(p["rsi_period"])
     overbought = float(p["overbought"])
     oversold = float(p["oversold"])
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     closes = candles[:, 4].astype(float)
     if len(closes) < period + 5:
@@ -82,7 +78,7 @@ def run_strategy_e(candles: np.ndarray, params: dict | None = None) -> dict:
     last_close = float(closes[-1])
     atr = simple_atr(candles)
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, 1.5, 2.5)
 
     rsi_direction = "subiendo" if current_rsi > prev_rsi else "bajando"
 

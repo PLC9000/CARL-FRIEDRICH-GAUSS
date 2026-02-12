@@ -67,16 +67,6 @@ STRATEGY_REGISTRY = {
                 "desc": "Porcentaje minimo de movimiento predicho para generar senal.",
                 "tip": "Si lo pones en 0.1% genera muchas senales (mas operaciones). En 2%+ solo genera senal con movimientos grandes (menos operaciones, mas seguras).",
             },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Que tan lejos poner el stop-loss para limitar perdidas.",
-                "tip": "Se calcula como multiplo de la volatilidad reciente (ATR). Con 1.0 el stop queda apretado (te saca rapido). Con 3.0+ le da mas espacio al precio para moverse.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Que tan lejos poner el take-profit para tomar ganancias.",
-                "tip": "Idealmente debe ser mayor que sl_multiplier. Ej: SL=1.5 y TP=2.5 significa que por cada $1 que arriesgas, buscas ganar $1.67.",
-            },
         },
     },
     "B": {
@@ -119,16 +109,6 @@ STRATEGY_REGISTRY = {
                 "desc": "Si la volatilidad supera este %, la estrategia se silencia y dice ESPERAR.",
                 "tip": "Es un filtro de seguridad. Con 3% se calla con cualquier movimiento fuerte. Con 10%+ solo se calla en crashes extremos. El default de 5% es un buen balance.",
             },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad (ATR).",
-                "tip": "Con 1.0 el stop queda cerca (te saca rapido si se da vuelta). Con 3.0+ le da espacio para respirar.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad (ATR).",
-                "tip": "Un TP mayor que el SL hace que ganes mas de lo que arriesgas en cada operacion. Ratio 1:2 (SL=1.5, TP=2.5) es un clasico.",
-            },
         },
     },
     "C": {
@@ -165,16 +145,6 @@ STRATEGY_REGISTRY = {
                 "value": 1.5, "min": 1.0, "max": 3.0, "step": 0.1,
                 "desc": "Filtro de seguridad: si la volatilidad actual es X veces mayor que lo normal, se silencia.",
                 "tip": "Evita operar en momentos de panico o euforia donde el precio puede seguir alejandose del promedio. Con 1.2 es muy conservador. Con 2.5+ deja operar en casi cualquier condicion.",
-            },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad.",
-                "tip": "Para reversion a la media, un SL ajustado (1.0-1.5) funciona bien porque esperas que el precio se de vuelta rapido.",
-            },
-            "tp_multiplier": {
-                "value": 2.0, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "El target natural es el promedio del precio. No pongas TPs demasiado ambiciosos en esta estrategia (2.0-3.0 es ideal).",
             },
         },
     },
@@ -225,16 +195,6 @@ STRATEGY_REGISTRY = {
                 "desc": "Porcentaje minimo de |score| para generar senal. Por debajo = HOLD.",
                 "tip": "Con 0 genera senal siempre (incluso con divergencias minimas). Con 5-10 filtra ruido y solo opera con senales claras. 3.0 es un buen default.",
             },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo del ATR.",
-                "tip": "Para reversion a la media, 1.5-2.0 es razonable. Mas ajustado si el score es alto (alta confianza).",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo del ATR.",
-                "tip": "El target natural es cuando las EMAs convergen. Un TP de 2.0-3.0 es coherente.",
-            },
         },
     },
     "E": {
@@ -270,16 +230,6 @@ STRATEGY_REGISTRY = {
                 "value": 30, "min": 10, "max": 40,
                 "desc": "Por debajo de este nivel se considera 'sobrevendido' y genera senal de COMPRA.",
                 "tip": "30 es el clasico. Si queres ser mas conservador usa 20 (solo compra en panico real). Para crypto, 25-30 funciona bien porque las caidas suelen ser bruscas.",
-            },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad.",
-                "tip": "El RSI opera en reversos, asi que el SL debe proteger si el precio sigue cayendo en vez de rebotar. Un SL de 1.5-2.0 ATR es razonable.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "El target natural es cuando el RSI vuelve a la zona media (50). No seas demasiado ambicioso, 2.0-3.0 es un buen rango.",
             },
         },
     },
@@ -324,16 +274,6 @@ STRATEGY_REGISTRY = {
                 "desc": "Que evento genera la senal de trading.",
                 "tip": "'cross' = genera senal cuando las lineas se cruzan (clasico, mas claro). 'histogram' = genera senal cuando las barras cambian de signo (mas rapido, detecta cambios antes). Empeza con 'cross'.",
             },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad.",
-                "tip": "El MACD es una estrategia de tendencia, dale espacio al precio (1.5-2.5 es un buen rango).",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "Podes ser generoso (3.0-5.0) si el momentum es fuerte. El cruce inverso del MACD naturalmente sugiere cerrar.",
-            },
         },
     },
     "G": {
@@ -370,16 +310,6 @@ STRATEGY_REGISTRY = {
                 "value": "touch", "options": ["touch", "close_outside"],
                 "desc": "Cuando se activa la senal: al tocar la banda o al cerrar fuera de ella.",
                 "tip": "'touch' = genera senal apenas el precio roza la banda (mas rapido, mas senales). 'close_outside' = espera a que la vela cierre fuera de la banda (mas confirmacion, menos falsas alarmas).",
-            },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad.",
-                "tip": "Como Bollinger ya mide volatilidad, un SL de 1.0-1.5 ATR suele ser suficiente.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "El target natural es la banda opuesta o la media central. Un TP de 2.0-3.0 es coherente con el rango de las bandas.",
             },
         },
     },
@@ -418,16 +348,6 @@ STRATEGY_REGISTRY = {
                 "desc": "Si se activa, solo genera senal cuando el volumen de la vela de ruptura es mayor al promedio.",
                 "tip": "MUY recomendado activarlo. Una ruptura con volumen alto es mucho mas confiable. Sin volumen, muchas veces el precio vuelve al canal rapidamente.",
             },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad.",
-                "tip": "En breakouts el SL natural es justo debajo/encima del canal roto. Un multiplo de 1.0-1.5 ATR suele quedar bien alineado con ese nivel.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "Los breakouts pueden generar movimientos MUY grandes. Podes ser ambicioso con 3.0-5.0 o incluso mas si el canal era muy largo (mucha energia acumulada).",
-            },
         },
     },
     "I": {
@@ -465,16 +385,6 @@ STRATEGY_REGISTRY = {
                 "value": "both", "options": ["both", "long_only", "short_only"],
                 "desc": "En que direccion opera la estrategia.",
                 "tip": "'both' = compra y vende (default). 'long_only' = solo genera senales de COMPRA (ideal si sos optimista con el activo). 'short_only' = solo VENTA (raro en crypto, pero util para cobertura).",
-            },
-            "sl_multiplier": {
-                "value": 1.0, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Stop-loss adicional de seguridad por debajo del trailing stop.",
-                "tip": "Como la estrategia YA tiene un trailing stop dinamico, este SL adicional es un respaldo. Con 1.0 queda justo en el trailing. Con 2.0+ da un colchon extra por si hay un spike rapido.",
-            },
-            "tp_multiplier": {
-                "value": 2.0, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Take-profit como multiplo de la volatilidad.",
-                "tip": "Esta estrategia normalmente deja que el trailing stop maneje la salida. El TP es un limite maximo opcional. Podes ponerlo alto (5.0+) para dejarlo correr, o moderado (2.0-3.0) para asegurar ganancia.",
             },
         },
     },
@@ -520,16 +430,6 @@ STRATEGY_REGISTRY = {
                 "desc": "Si se activa, solo genera senal cuando el ADX esta subiendo (la tendencia se fortalece).",
                 "tip": "MUY recomendado para evitar entrar cuando la tendencia ya esta debilitandose. Un ADX de 40 pero bajando significa que la tendencia pierde fuerza, no conviene entrar.",
             },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad (ATR).",
-                "tip": "El ADX ya filtra por tendencia, asi que podes dar espacio al precio (1.5-2.5). Si el ADX es alto (40+) la tendencia es fuerte y un SL mas amplio (2.0-3.0) evita que te saquen en un retroceso normal.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "En tendencias fuertes (ADX 40+) podes ser ambicioso (3.0-5.0). Si el ADX es justo 25-30, un TP moderado (2.0-2.5) es mas realista.",
-            },
         },
     },
     "K": {
@@ -568,16 +468,6 @@ STRATEGY_REGISTRY = {
                 "value": 7, "min": 3, "max": 30,
                 "desc": "Cuantos dias de historial del FNG se usan para calcular la tendencia.",
                 "tip": "7 dias da una buena lectura de la tendencia del sentimiento. Con 3 reacciona rapido a cambios, con 14-30 da una vision mas estable.",
-            },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo del ATR.",
-                "tip": "Como el FNG es un indicador lento (cambia una vez al dia), conviene dar espacio al precio (1.5-3.0).",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo del ATR.",
-                "tip": "En extremos de sentimiento las reversiones suelen ser fuertes. Un TP de 3.0-5.0 puede capturar buenas ganancias en rebotes de panico.",
             },
         },
     },
@@ -629,16 +519,6 @@ STRATEGY_REGISTRY = {
                 "value": 5.0, "min": 0.0, "max": 30.0, "step": 1.0,
                 "desc": "Factor minimo (en valor absoluto) para generar senal. Por debajo = ESPERAR.",
                 "tip": "Con 0 siempre genera senal (incluso con la EMA apenas inclinada). Con 5-10 filtra los momentos de lateralizacion. Con 20+ solo reacciona a pendientes muy claras.",
-            },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad (ATR).",
-                "tip": "La pendiente de EMA es una senal de tendencia. Dale espacio al precio (1.5-2.5) para que la tendencia se desarrolle.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "Con pendiente fuerte (factor alto), podes ser ambicioso (3.0-5.0). Con pendiente suave, un TP moderado (2.0-2.5) es mas realista.",
             },
         },
     },
@@ -700,16 +580,6 @@ STRATEGY_REGISTRY = {
                 "value": 10, "min": 0, "max": 50,
                 "desc": "Zona muerta: si |direccion| < este valor, la estrategia dice ESPERAR.",
                 "tip": "Con 10, Claude necesita estar al menos 10% seguro de una direccion para generar senal. Con 0 siempre genera senal. Con 30+ solo opera con direcciones muy claras.",
-            },
-            "sl_multiplier": {
-                "value": 1.5, "min": 0.5, "max": 5.0, "step": 0.1,
-                "desc": "Distancia del stop-loss como multiplo de la volatilidad (ATR).",
-                "tip": "Claude a veces da senales sutiles, asi que un SL de 1.5-2.0 es razonable para darle espacio.",
-            },
-            "tp_multiplier": {
-                "value": 2.5, "min": 0.5, "max": 10.0, "step": 0.1,
-                "desc": "Distancia del take-profit como multiplo de la volatilidad.",
-                "tip": "Si Claude da alta confianza e intensidad, podes ser ambicioso (3.0-5.0). Si es moderada, 2.0-2.5 es mas seguro.",
             },
         },
     },

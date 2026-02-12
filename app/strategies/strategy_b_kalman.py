@@ -19,8 +19,6 @@ DEFAULTS: dict[str, float] = {
     "measurement_noise": 0.01,
     "trend_threshold": 0.03,     # percent (0.03% per bar)
     "volatility_cap": 5.0,      # percent
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -69,8 +67,6 @@ def run_strategy_b(candles: np.ndarray, params: dict | None = None) -> dict:
     measurement_noise = p["measurement_noise"]
     trend_threshold = p["trend_threshold"] / 100   # convert from % to decimal
     volatility_cap = p["volatility_cap"] / 100     # convert from % to decimal
-    sl_mult = p["sl_multiplier"]
-    tp_mult = p["tp_multiplier"]
 
     closes = candles[:, 4].astype(float)
 
@@ -113,7 +109,7 @@ def run_strategy_b(candles: np.ndarray, params: dict | None = None) -> dict:
 
     atr = simple_atr(candles)
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, 1.5, 2.5)
 
     return {
         "recommendation": signal,

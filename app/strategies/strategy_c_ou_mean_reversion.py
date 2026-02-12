@@ -19,8 +19,6 @@ DEFAULTS: dict[str, float] = {
     "lookback": 50,
     "z_threshold": 2.0,
     "vol_regime_multiplier": 1.5,
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.0,
 }
 
 
@@ -29,8 +27,6 @@ def run_strategy_c(candles: np.ndarray, params: dict | None = None) -> dict:
     lookback = int(p["lookback"])
     z_threshold = p["z_threshold"]
     vol_mult = p["vol_regime_multiplier"]
-    sl_mult = p["sl_multiplier"]
-    tp_mult = p["tp_multiplier"]
 
     closes = candles[:, 4].astype(float)
 
@@ -82,7 +78,7 @@ def run_strategy_c(candles: np.ndarray, params: dict | None = None) -> dict:
     last_close = float(closes[-1])
     atr = simple_atr(candles)
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, 1.5, 2.5)
 
     return {
         "recommendation": signal,

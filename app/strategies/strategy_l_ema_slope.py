@@ -47,8 +47,6 @@ DEFAULTS = {
     "max_angle": 45.0,        # Ángulo máximo para normalización (grados)
     "smooth_period": 5,       # EMA secundaria sobre ángulos (1 = sin suavizado)
     "deadzone": 5.0,          # |factor| mínimo para generar señal
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -87,8 +85,6 @@ def run_strategy_l(candles: np.ndarray, params: dict | None = None) -> dict:
     max_angle = float(p["max_angle"])
     smooth_period = int(p["smooth_period"])
     deadzone = float(p["deadzone"])
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     # --- Validaciones ---
     if max_angle <= 0:
@@ -166,7 +162,7 @@ def run_strategy_l(candles: np.ndarray, params: dict | None = None) -> dict:
     last_close = float(closes[-1])
     atr_val = _simple_atr(candles, min(20, len(closes)))
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, 1.5, 2.5)
 
     ema_value = float(ema_fast[valid_mask][-1])
 

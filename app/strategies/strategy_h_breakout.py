@@ -19,8 +19,6 @@ DEFAULTS = {
     "breakout_type": "donchian",  # "donchian" or "high_low"
     "buffer_pct": 0.1,            # percent
     "volume_filter": False,
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -29,8 +27,6 @@ def run_strategy_h(candles: np.ndarray, params: dict | None = None) -> dict:
     lookback = int(p["lookback"])
     buffer_pct = float(p["buffer_pct"]) / 100
     volume_filter = bool(p.get("volume_filter", False))
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     highs = candles[:, 2].astype(float)
     lows = candles[:, 3].astype(float)
@@ -80,7 +76,7 @@ def run_strategy_h(candles: np.ndarray, params: dict | None = None) -> dict:
 
     atr = simple_atr(candles)
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, 1.5, 2.5)
 
     channel_width = (upper_channel - lower_channel) / last_close * 100 if last_close else 0
 

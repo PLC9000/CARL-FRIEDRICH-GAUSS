@@ -22,8 +22,6 @@ DEFAULTS = {
     "fear_threshold": 25,       # FNG <= this → BUY
     "greed_threshold": 75,      # FNG >= this → SELL
     "trend_days": 7,            # Days of FNG history for trend analysis
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 FNG_API_URL = "https://api.alternative.me/fng/"
@@ -47,8 +45,6 @@ def run_strategy_k(candles: np.ndarray, params: dict | None = None) -> dict:
     fear_th = int(p["fear_threshold"])
     greed_th = int(p["greed_threshold"])
     trend_days = int(p["trend_days"])
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     # Fetch Fear & Greed data
     fng_data = _fetch_fng(limit=max(trend_days, 7))
@@ -89,7 +85,7 @@ def run_strategy_k(candles: np.ndarray, params: dict | None = None) -> dict:
     atr_val = _atr(highs, lows, closes)
 
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, 1.5, 2.5)
 
     trend_label = (
         "miedo creciente" if fng_trend < -5

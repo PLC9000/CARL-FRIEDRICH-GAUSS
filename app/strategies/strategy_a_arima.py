@@ -21,8 +21,6 @@ DEFAULTS: dict[str, float] = {
     "ar_order": 4,
     "forecast_horizon": 5,
     "return_threshold": 0.5,    # percent
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -83,8 +81,6 @@ def run_strategy_a(candles: np.ndarray, params: dict | None = None) -> dict:
     ar_order = int(p["ar_order"])
     forecast_horizon = int(p["forecast_horizon"])
     return_threshold = p["return_threshold"] / 100  # convert from % to decimal
-    sl_mult = p["sl_multiplier"]
-    tp_mult = p["tp_multiplier"]
 
     closes = candles[:, 4].astype(float)
 
@@ -125,7 +121,7 @@ def run_strategy_a(candles: np.ndarray, params: dict | None = None) -> dict:
     # Price levels
     entry = last_close
     atr = simple_atr(candles)
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, 1.5, 2.5)
 
     # Approximate 95% confidence interval
     ci_half = 1.96 * res_std * np.sqrt(forecast_horizon)

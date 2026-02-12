@@ -41,8 +41,6 @@ DEFAULTS: dict[str, Any] = {
     "include_24hr": True,
     "history_window": 10,
     "direction_deadzone": 10,
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -441,8 +439,7 @@ def run_strategy_m(candles: np.ndarray, params: dict | None = None) -> dict:
     last_close = float(candles[-1, 4])
     entry = last_close
     atr_val = simple_atr(candles)
-    sl, tp = compute_sl_tp(signal, entry, atr_val,
-                           float(p["sl_multiplier"]), float(p["tp_multiplier"]))
+    sl, tp = compute_sl_tp(signal, entry, atr_val, 1.5, 2.5)
 
     return {
         "recommendation": signal,

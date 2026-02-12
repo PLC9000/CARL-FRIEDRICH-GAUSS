@@ -17,8 +17,6 @@ DEFAULTS = {
     "period": 20,
     "std_dev": 2.0,
     "entry_rule": "touch",  # "touch" or "close_outside"
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -27,8 +25,6 @@ def run_strategy_g(candles: np.ndarray, params: dict | None = None) -> dict:
     period = int(p["period"])
     std_dev = float(p["std_dev"])
     entry_rule = str(p["entry_rule"]).lower()
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     closes = candles[:, 4].astype(float)
     lows = candles[:, 3].astype(float)
@@ -77,7 +73,7 @@ def run_strategy_g(candles: np.ndarray, params: dict | None = None) -> dict:
 
     atr = simple_atr(candles)
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr, 1.5, 2.5)
 
     return {
         "recommendation": signal,

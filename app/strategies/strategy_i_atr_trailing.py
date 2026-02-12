@@ -18,8 +18,6 @@ DEFAULTS = {
     "atr_period": 14,
     "atr_multiplier": 3.0,
     "direction": "both",  # "long_only", "short_only", "both"
-    "sl_multiplier": 1.0,
-    "tp_multiplier": 2.0,
 }
 
 
@@ -52,8 +50,6 @@ def run_strategy_i(candles: np.ndarray, params: dict | None = None) -> dict:
     atr_period = int(p["atr_period"])
     multiplier = float(p["atr_multiplier"])
     direction = str(p["direction"]).lower()
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     closes = candles[:, 4].astype(float)
     if len(candles) < atr_period + 10:
@@ -115,7 +111,7 @@ def run_strategy_i(candles: np.ndarray, params: dict | None = None) -> dict:
     confidence = round(min(distance_pct * 20, 100), 1) if flip else round(max(0, 20 - distance_pct * 5), 1)
 
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, last_atr * multiplier, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, last_atr * multiplier, 1.5, 2.5)
 
     trend_label = "ALCISTA" if curr_trend == 1 else "BAJISTA"
 

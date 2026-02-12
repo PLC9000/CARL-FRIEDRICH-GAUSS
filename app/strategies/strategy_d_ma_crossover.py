@@ -28,8 +28,6 @@ DEFAULTS = {
     "volatility_period": 14,
     "k": 1.0,              # sensibilidad del tanh
     "deadzone": 3.0,       # |pct| menor a esto → HOLD
-    "sl_multiplier": 1.5,
-    "tp_multiplier": 2.5,
 }
 
 
@@ -43,8 +41,6 @@ def run_strategy_d(candles: np.ndarray, params: dict | None = None) -> dict:
     vol_period = int(p["volatility_period"])
     k = float(p["k"])
     deadzone = float(p["deadzone"])
-    sl_mult = float(p["sl_multiplier"])
-    tp_mult = float(p["tp_multiplier"])
 
     # --- Validaciones ---
     if fast_period >= slow_period:
@@ -97,7 +93,7 @@ def run_strategy_d(candles: np.ndarray, params: dict | None = None) -> dict:
     # --- Entry / SL / TP ---
     atr_val = _atr(highs, lows, closes, min(14, len(closes)))
     entry = last_close
-    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, sl_mult, tp_mult)
+    stop_loss, take_profit = compute_sl_tp(signal, entry, atr_val, 1.5, 2.5)
 
     return {
         "recommendation": signal,

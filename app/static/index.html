@@ -935,7 +935,7 @@ body{font-size:13px}
           <input type="number" id="rcpBuyTh" value="50" min="10" max="100" step="5" style="border-color:rgba(34,197,94,.3)"></div>
         <div class="form-group"><label><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:4px;vertical-align:middle"></span>Venta %<span class="hint">Score direcci&oacute;n &le; -este % dispara SELL. Color rojo en barras.</span></label>
           <input type="number" id="rcpSellTh" value="50" min="10" max="100" step="5" style="border-color:rgba(239,68,68,.3)"></div>
-        <div class="form-group"><label><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-right:4px;vertical-align:middle"></span>Fuerza %<span class="hint">Gate ADX para aprobaci&oacute;n. 0 = sin gate. Color naranja en barras.</span></label>
+        <div class="form-group"><label><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-right:4px;vertical-align:middle"></span>Fuerza %<span class="hint">Gate de fuerza para aprobaci&oacute;n. 0 = sin gate. Color naranja en barras.</span></label>
           <input type="number" id="rcpStrengthTh" value="0" min="0" max="100" step="5" style="border-color:rgba(245,158,11,.3)"></div>
         <div class="form-group"><label>Confirm (min)<span class="hint">Legacy. Usar segundos.</span></label>
           <input type="number" id="rcpConfirmMin" value="0" min="0" max="1440" step="1"></div>
@@ -946,12 +946,12 @@ body{font-size:13px}
 
     <div class="rcp-param-group execution">
       <div class="rpg-title">&#9889; Auto-ejecuci&oacute;n <span style="font-size:.6rem;color:var(--accent);font-weight:600">(morado en barras)</span></div>
-      <!-- Umbrales auto: EMA (direccion) y ADX (fuerza) lado a lado con colores -->
+      <!-- Umbrales auto: Dirección y Fuerza lado a lado -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:10px">
         <div style="background:rgba(59,130,246,.03);border:1px solid rgba(59,130,246,.12);border-radius:4px 0 0 8px;padding:12px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
             <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3b82f6"></span>
-            <span style="font-weight:800;font-size:.72rem;text-transform:uppercase;color:var(--accent)">EMA &mdash; Direcci&oacute;n</span>
+            <span style="font-weight:800;font-size:.72rem;text-transform:uppercase;color:var(--accent)">Direcci&oacute;n</span>
           </div>
           <div class="form-group" style="margin-bottom:6px"><label>Auto direcci&oacute;n %<span class="hint">Score &ge; este % → auto. 0 = off.</span></label>
             <input type="number" id="rcpAutoTh" value="0" min="0" max="100" step="5" style="border-color:rgba(59,130,246,.4)"></div>
@@ -960,11 +960,11 @@ body{font-size:13px}
         <div style="background:rgba(59,130,246,.03);border:1px solid rgba(59,130,246,.12);border-radius:0 8px 8px 0;padding:12px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
             <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3b82f6"></span>
-            <span style="font-weight:800;font-size:.72rem;text-transform:uppercase;color:var(--accent)">ADX &mdash; Fuerza</span>
+            <span style="font-weight:800;font-size:.72rem;text-transform:uppercase;color:var(--accent)">Fuerza</span>
           </div>
           <div class="form-group" style="margin-bottom:6px"><label>Auto fuerza %<span class="hint">Fuerza &ge; este % + auto dir → auto. 0 = off.</span></label>
             <input type="number" id="rcpAutoStrTh" value="0" min="0" max="100" step="5" style="border-color:rgba(59,130,246,.4)"></div>
-          <div style="font-size:.58rem;color:var(--muted);line-height:1.3;margin-top:4px">Fuerza ADX debe superar este umbral junto con auto direcci&oacute;n. Marcador <span style="color:var(--accent);font-weight:700">morado</span> en la barra de fuerza.</div>
+          <div style="font-size:.58rem;color:var(--muted);line-height:1.3;margin-top:4px">La fuerza debe superar este umbral junto con auto direcci&oacute;n. Marcador <span style="color:var(--accent);font-weight:700">morado</span> en la barra de fuerza.</div>
         </div>
       </div>
       <!-- Cantidades y tipo de orden: Compra / Venta -->
@@ -1787,7 +1787,7 @@ async function saveRecipe(){
   if(autoThPct>0&&(autoThPct<buyThPct||autoThPct<sellThPct))return toast('El umbral de auto-aprobacion debe ser >= que los umbrales de compra y venta','error');
   if((_selectedMode||'roles')==='roles'){
     var hasStrength=strategies.some(function(s){return s.role==='strength'});
-    if((strengthThPct>0||autoStrThPct>0)&&!hasStrength)return toast('Configuraste umbrales de fuerza pero ninguna estrategia tiene rol "Fuerza". Cambiá el rol de al menos una (ej: ADX) a "Fuerza"','error');
+    if((strengthThPct>0||autoStrThPct>0)&&!hasStrength)return toast('Configuraste umbrales de fuerza pero ninguna estrategia tiene rol "Fuerza". Cambiá el rol de al menos una a "Fuerza"','error');
   }
   if(isNaN(maxPct)||maxPct<0.1||maxPct>100)return toast('Max orden % debe estar entre 0.1 y 100','error');
   if(isNaN(slPct)||slPct<0.1||slPct>50)return toast('Stop-Loss % debe estar entre 0.1 y 50','error');
@@ -2450,9 +2450,9 @@ function buildChartHTML(recipe,latest,history,currentPrice,recipeId,isLive,close
     +'<div class="ifl-stage execution">'
     +'<div class="ifl-stage-header"><div class="ifl-stage-num">2</div><div class="ifl-stage-title">Ejecuci\u00f3n autom\u00e1tica <span style="font-size:.6rem;color:var(--accent);font-weight:600">(morado en barras)</span></div></div>'
     +'<div class="ifl-stage-fields" style="grid-template-columns:1fr 1fr">'
-    +'<div class="inline-th-group" style="border-left:3px solid var(--accent);padding-left:8px"><label><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#3b82f6;margin-right:3px;vertical-align:middle"></span>Auto EMA (dir.) %</label>'
+    +'<div class="inline-th-group" style="border-left:3px solid var(--accent);padding-left:8px"><label><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#3b82f6;margin-right:3px;vertical-align:middle"></span>Auto direcci\u00f3n %</label>'
     +'<input type="number" id="inlineAutoTh-'+recipeId+'" value="'+Math.round((recipe.auto_threshold||0)*100)+'" min="0" max="100" step="5" style="border-color:rgba(59,130,246,.4)"></div>'
-    +'<div class="inline-th-group" style="border-left:3px solid var(--accent);padding-left:8px"><label><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#3b82f6;margin-right:3px;vertical-align:middle"></span>Auto ADX (fza.) %</label>'
+    +'<div class="inline-th-group" style="border-left:3px solid var(--accent);padding-left:8px"><label><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#3b82f6;margin-right:3px;vertical-align:middle"></span>Auto fuerza %</label>'
     +'<input type="number" id="inlineAutoStrTh-'+recipeId+'" value="'+Math.round((recipe.auto_strength_threshold||0)*100)+'" min="0" max="100" step="5" style="border-color:rgba(59,130,246,.4)"></div>'
     +'</div>'
     +'<div id="iflBinanceLimits-'+recipeId+'" style="font-size:.58rem;color:var(--muted);margin:4px 0 6px;text-align:center">Cargando l\u00edmites...</div>'
@@ -2611,7 +2611,7 @@ function getSignalExplanation(signal,score,stratResults){
   return 'No se detecta una se\u00f1al clara. El score de '+(score>=0?'+':'')+Math.round(score*100)+'% est\u00e1 en zona neutral. Conviene esperar.';
 }
 
-var _METRIC_KEYS_SKIP={'sl_multiplier':1,'tp_multiplier':1,'threshold':1,'fear_threshold':1,'greed_threshold':1,'force':1};
+var _METRIC_KEYS_SKIP={'threshold':1,'fear_threshold':1,'greed_threshold':1,'force':1};
 var _METRIC_KEY_LABELS={
   predicted_return:'Retorno predicho',forecast_horizon:'Horizonte',ar_order:'Orden AR',
   rsi:'RSI',overbought:'Sobrecompra',oversold:'Sobreventa',
@@ -4634,9 +4634,9 @@ function renderRecipeFlow(d){
       +'<div style="display:flex;align-items:center;margin-bottom:8px">'+stepNum('5','var(--accent)')+'<span style="font-size:.6rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">VENTANA DE CONFIRMACI\u00d3N</span>'
       +'<span style="font-size:.72rem;font-weight:900;color:var(--accent);margin-left:auto;font-family:monospace">'+confInfo.display+'</span></div>'
       +'<div style="font-size:.55rem;color:var(--muted);margin-bottom:8px">La se\u00f1al debe mantenerse estable durante el per\u00edodo configurado.</div>';
-    dg+=triggerRow('EMA Dir.','se\u00f1al estable '+confInfo.display,confInfo.direction_status==='BUY'?'COMPRA':confInfo.direction_status==='SELL'?'VENTA':'ESPERAR',confInfo.direction_status!=='HOLD','#1e88e5');
+    dg+=triggerRow('Direcci\u00f3n','se\u00f1al estable '+confInfo.display,confInfo.direction_status==='BUY'?'COMPRA':confInfo.direction_status==='SELL'?'VENTA':'ESPERAR',confInfo.direction_status!=='HOLD','#1e88e5');
     if(hasStrength){
-      dg+=triggerRow('ADX Fza.','fuerza estable '+confInfo.display,confInfo.strength_status,confInfo.strength_status==='PASS','#ff9800');
+      dg+=triggerRow('Fuerza','fuerza estable '+confInfo.display,confInfo.strength_status,confInfo.strength_status==='PASS','#ff9800');
     }
     dg+='</div>';
   }
