@@ -75,6 +75,14 @@ textarea{resize:vertical;min-height:60px}
 .modal-sub{font-size:.82rem;color:var(--muted);margin-bottom:18px;line-height:1.4}
 .modal-close{float:right;cursor:pointer;font-size:1.3rem;opacity:.5;transition:opacity .2s;background:none;border:none;color:var(--text)}.modal-close:hover{opacity:1}
 
+/* ── Server IP Box ────────────────────────────────── */
+.server-ip-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px}
+.server-ip-box .ip-label{font-size:.75rem;color:var(--muted);font-weight:700;white-space:nowrap}
+.server-ip-box .ip-value{font-family:'Courier New',monospace;font-size:.95rem;font-weight:800;color:var(--accent);flex:1;user-select:all}
+.server-ip-box .ip-copy{cursor:pointer;padding:6px 12px;border-radius:6px;border:1px solid var(--accent);background:none;color:var(--accent);font-size:.72rem;font-weight:800;transition:all .2s;white-space:nowrap}
+.server-ip-box .ip-copy:hover{background:var(--accent);color:var(--bg)}
+.server-ip-box .ip-copy.copied{border-color:var(--buy);color:var(--buy)}
+
 /* ── Permissions Grid ─────────────────────────────── */
 .perm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
 .perm-card{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);transition:border-color .2s}
@@ -694,6 +702,11 @@ body.show-ids [data-dbg]{outline:1px dashed rgba(57,255,20,.35) !important;outli
     <div class="modal-title">Configuraci&oacute;n de Binance</div>
     <div class="modal-sub">Guard&aacute; tus API keys para poder ejecutar &oacute;rdenes reales. Se encriptan en la base de datos y nunca se muestran en texto plano.<br><br><strong>Importante:</strong> cre&aacute; keys con permisos de <strong>solo lectura + spot trading</strong>. No habilites retiros.</div>
     <div id="settingsStatus" style="margin-bottom:14px"></div>
+    <div class="server-ip-box" id="serverIpBox" style="display:none">
+      <span class="ip-label">IP del servidor:</span>
+      <span class="ip-value" id="serverIpValue">...</span>
+      <button class="ip-copy" id="serverIpCopy" onclick="copyServerIp()">Copiar</button>
+    </div>
     <div class="form-group">
       <label>API Key<span class="hint">La key p&uacute;blica de tu cuenta de Binance.</span></label>
       <input type="text" id="cfgApiKey" placeholder="vmPUZE6mv9SD5V...">
@@ -1152,8 +1165,21 @@ async function loadBinanceStatus(){
     if(!r.configured)document.getElementById('permissionsSection').innerHTML='';
   }catch(e){USER.hasKeys=false}
 }
-function openSettings(){document.getElementById('settingsModal').classList.add('show');loadBinanceStatus()}
+function openSettings(){document.getElementById('settingsModal').classList.add('show');loadBinanceStatus();loadServerIp()}
 function closeSettings(){document.getElementById('settingsModal').classList.remove('show')}
+async function loadServerIp(){
+  try{const r=await api('GET','/settings/server-ip');
+    document.getElementById('serverIpValue').textContent=r.server_ip;
+    document.getElementById('serverIpBox').style.display='flex';
+  }catch(e){document.getElementById('serverIpBox').style.display='none'}
+}
+function copyServerIp(){
+  const ip=document.getElementById('serverIpValue').textContent;
+  navigator.clipboard.writeText(ip).then(()=>{
+    const btn=document.getElementById('serverIpCopy');btn.textContent='\u2713 Copiado';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copiar';btn.classList.remove('copied')},2000);
+  });
+}
 async function saveBinanceKeys(){
   const k=document.getElementById('cfgApiKey').value.trim(),s=document.getElementById('cfgApiSecret').value.trim();
   if(!k||!s)return toast('Completa API Key y Secret','error');
