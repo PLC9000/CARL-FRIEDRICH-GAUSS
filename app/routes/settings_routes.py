@@ -131,6 +131,57 @@ async def get_server_ip(
         )
 
 
+# ── Anthropic API key ─────────────────────────────────────────────────
+
+@router.post("/anthropic", summary="Guardar API key de Anthropic")
+def save_anthropic_key(
+    body: dict,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Guarda la API key de Anthropic encriptada para la estrategia Claude AI."""
+    key = (body.get("api_key") or "").strip()
+    if not key:
+        raise HTTPException(status_code=422, detail="API key vacía")
+    user.anthropic_api_key_enc = encrypt(key)
+    db.add(AuditLog(
+        user_id=user.id,
+        action="settings.anthropic_key_saved",
+        payload={"key_hint": key[:8] + "..."},
+    ))
+    db.commit()
+    return {"configured": True, "key_hint": key[:8] + "..."}
+
+
+@router.get("/anthropic", summary="Estado de API key de Anthropic")
+def get_anthropic_key(user: User = Depends(get_current_user)):
+    """Devuelve si la API key de Anthropic está configurada."""
+    enc = getattr(user, "anthropic_api_key_enc", "") or ""
+    if not enc:
+        return {"configured": False, "key_hint": ""}
+    try:
+        raw = decrypt(enc)
+        return {"configured": True, "key_hint": raw[:8] + "..." if len(raw) >= 8 else "***"}
+    except Exception:
+        return {"configured": True, "key_hint": "error"}
+
+
+@router.delete("/anthropic", summary="Eliminar API key de Anthropic")
+def delete_anthropic_key(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Elimina la API key de Anthropic."""
+    user.anthropic_api_key_enc = ""
+    db.add(AuditLog(
+        user_id=user.id,
+        action="settings.anthropic_key_deleted",
+        payload={},
+    ))
+    db.commit()
+    return {"detail": "API key de Anthropic eliminada"}
+
+
 # ── Auto-only preference ──────────────────────────────────────────────
 
 @router.get("/auto-only", summary="Estado de modo Solo Automáticas")

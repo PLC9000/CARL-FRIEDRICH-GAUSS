@@ -36,6 +36,8 @@ class User(Base):
     # Binance credentials (encrypted at rest)
     binance_api_key_enc = Column(Text, default="")
     binance_api_secret_enc = Column(Text, default="")
+    # Anthropic API key (encrypted at rest)
+    anthropic_api_key_enc = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     recommendations = relationship("Recommendation", back_populates="user")

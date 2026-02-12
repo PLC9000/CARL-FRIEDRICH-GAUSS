@@ -842,6 +842,19 @@ body{font-size:13px}
       <button class="btn btn-outline btn-sm" id="btnPerms" onclick="loadPermissions()" style="display:none">Ver permisos</button>
     </div>
     <div id="permissionsSection"></div>
+    <!-- Anthropic API Key -->
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-weight:700;font-size:.82rem;margin-bottom:8px">&#129504; Claude AI (Estrategia M)</div>
+      <div id="anthropicStatus" style="margin-bottom:8px;font-size:.72rem"></div>
+      <div class="form-group">
+        <label>API Key de Anthropic<span class="hint">Obt&eacute;n tu key en console.anthropic.com</span></label>
+        <input type="password" id="cfgAnthropicKey" placeholder="sk-ant-api03-...">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" onclick="saveAnthropicKey()">Guardar</button>
+        <button class="btn btn-outline btn-sm" onclick="deleteAnthropicKey()" style="border-color:var(--sell);color:var(--sell)">Eliminar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1298,7 +1311,7 @@ async function loadBinanceStatus(){
     if(!r.configured)document.getElementById('permissionsSection').innerHTML='';
   }catch(e){USER.hasKeys=false}
 }
-function openSettings(){document.getElementById('settingsModal').classList.add('show');loadBinanceStatus();loadServerIp()}
+function openSettings(){document.getElementById('settingsModal').classList.add('show');loadBinanceStatus();loadServerIp();loadAnthropicStatus()}
 function closeSettings(){document.getElementById('settingsModal').classList.remove('show')}
 async function loadServerIp(){
   try{const r=await api('GET','/settings/server-ip');
@@ -1327,6 +1340,27 @@ async function deleteBinanceKeys(){
     document.getElementById('headerKeys').classList.add('hidden');
     await loadBinanceStatus();toast('API keys eliminadas','success');
   }catch(e){toast('Error eliminando keys: '+e.message,'error')}
+}
+/* ── ANTHROPIC CONFIG ─────────────────────────────────── */
+async function loadAnthropicStatus(){
+  try{const r=await api('GET','/settings/anthropic');
+    document.getElementById('anthropicStatus').innerHTML=r.configured
+      ?'<span class="badge badge-keys" style="background:rgba(167,139,250,.12);color:#a78bfa">Configurado: '+r.key_hint+'</span>'
+      :'<span style="color:var(--muted);font-size:.72rem">Sin API key configurada</span>';
+  }catch(e){}
+}
+async function saveAnthropicKey(){
+  const k=document.getElementById('cfgAnthropicKey').value.trim();
+  if(!k)return toast('Ingresa la API key de Anthropic','error');
+  try{await api('POST','/settings/anthropic',{api_key:k});
+    document.getElementById('cfgAnthropicKey').value='';
+    await loadAnthropicStatus();toast('API key de Anthropic guardada','success');
+  }catch(e){toast('Error guardando key: '+e.message,'error')}
+}
+async function deleteAnthropicKey(){
+  try{await api('DELETE','/settings/anthropic');
+    await loadAnthropicStatus();toast('API key de Anthropic eliminada','success');
+  }catch(e){toast('Error: '+e.message,'error')}
 }
 async function loadPermissions(){
   const sec=document.getElementById('permissionsSection');
