@@ -1,0 +1,26 @@
+databases:
+  - name: bottrading-db
+    plan: free
+    databaseName: bottrading
+    user: bottrading
+
+services:
+  - type: web
+    name: carl-friedrich-gauss
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bottrading-db
+          property: connectionURI
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: BINANCE_API_KEY
+        sync: false
+      - key: BINANCE_API_SECRET
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.3"
