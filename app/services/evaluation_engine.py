@@ -286,11 +286,13 @@ async def _evaluate_recipe(recipe: Recipe, db: Session, enabled_keys: set[str] |
             _anthropic_key = ""
             try:
                 from app.auth.encryption import decrypt
-                enc = getattr(recipe.user, "anthropic_api_key_enc", "") or ""
+                from app.models import User as _User
+                _owner = db.get(_User, recipe.user_id)
+                enc = getattr(_owner, "anthropic_api_key_enc", "") or "" if _owner else ""
                 if enc:
                     _anthropic_key = decrypt(enc)
-            except Exception:
-                pass
+            except Exception as _e:
+                logger.debug("Could not read user Anthropic key: %s", _e)
             if not _anthropic_key:
                 from app.config import get_settings as _gs
                 _anthropic_key = _gs().anthropic_api_key

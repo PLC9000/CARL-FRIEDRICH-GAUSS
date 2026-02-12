@@ -852,6 +852,7 @@ body{font-size:13px}
       </div>
       <div class="btn-row">
         <button class="btn btn-primary btn-sm" onclick="saveAnthropicKey()">Guardar</button>
+        <button class="btn btn-outline btn-sm" id="btnTestAnthropic" onclick="testAnthropicKey()" style="display:none">Testear</button>
         <button class="btn btn-outline btn-sm" onclick="deleteAnthropicKey()" style="border-color:var(--sell);color:var(--sell)">Eliminar</button>
       </div>
     </div>
@@ -1347,6 +1348,7 @@ async function loadAnthropicStatus(){
     document.getElementById('anthropicStatus').innerHTML=r.configured
       ?'<span class="badge badge-keys" style="background:rgba(167,139,250,.12);color:#a78bfa">Configurado: '+r.key_hint+'</span>'
       :'<span style="color:var(--muted);font-size:.72rem">Sin API key configurada</span>';
+    document.getElementById('btnTestAnthropic').style.display=r.configured?'inline-flex':'none';
   }catch(e){}
 }
 async function saveAnthropicKey(){
@@ -1361,6 +1363,13 @@ async function deleteAnthropicKey(){
   try{await api('DELETE','/settings/anthropic');
     await loadAnthropicStatus();toast('API key de Anthropic eliminada','success');
   }catch(e){toast('Error: '+e.message,'error')}
+}
+async function testAnthropicKey(){
+  var btn=document.getElementById('btnTestAnthropic');btn.disabled=true;btn.textContent='Testeando...';
+  try{await api('POST','/settings/anthropic/test');
+    toast('API key de Anthropic v\u00e1lida \u2714','success');
+  }catch(e){toast('Test fall\u00f3: '+e.message,'error');}
+  btn.disabled=false;btn.textContent='Testear';
 }
 async function loadPermissions(){
   const sec=document.getElementById('permissionsSection');

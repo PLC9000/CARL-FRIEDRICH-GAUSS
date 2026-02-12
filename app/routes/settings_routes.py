@@ -8,6 +8,7 @@ from app.auth.dependencies import get_current_user
 from app.auth.encryption import encrypt, decrypt
 from app.services.binance_account_service import get_api_permissions
 from app.services.http_client import get_client
+import httpx
 
 router = APIRouter(prefix="/settings", tags=["Configuración"])
 
@@ -164,6 +165,40 @@ def get_anthropic_key(user: User = Depends(get_current_user)):
         return {"configured": True, "key_hint": raw[:8] + "..." if len(raw) >= 8 else "***"}
     except Exception:
         return {"configured": True, "key_hint": "error"}
+
+
+@router.post("/anthropic/test", summary="Testear API key de Anthropic")
+async def test_anthropic_key(user: User = Depends(get_current_user)):
+    """Hace una llamada mínima a la API de Anthropic para verificar que la key funciona."""
+    enc = getattr(user, "anthropic_api_key_enc", "") or ""
+    if not enc:
+        raise HTTPException(status_code=400, detail="No hay API key configurada")
+    try:
+        key = decrypt(enc)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error desencriptando la key")
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "claude-haiku-4-5-20251001",
+                    "max_tokens": 10,
+                    "messages": [{"role": "user", "content": "ping"}],
+                },
+            )
+        if resp.status_code == 200:
+            return {"ok": True, "detail": "API key válida"}
+        body = resp.json()
+        msg = body.get("error", {}).get("message", resp.text[:200])
+        raise HTTPException(status_code=resp.status_code, detail=msg)
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Error de conexión: {exc}")
 
 
 @router.delete("/anthropic", summary="Eliminar API key de Anthropic")
