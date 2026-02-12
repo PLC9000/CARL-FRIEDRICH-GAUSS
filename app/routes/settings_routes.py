@@ -1,3 +1,4 @@
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -103,6 +104,31 @@ async def get_binance_permissions(
         return perms
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
+
+
+# ── Server WAN IP ────────────────────────────────────────────────────
+
+@router.get(
+    "/server-ip",
+    summary="Ver IP pública del servidor",
+)
+async def get_server_ip(
+    user: User = Depends(get_current_user),
+):
+    """Devuelve la IP pública (WAN) del servidor donde corre la aplicación.
+
+    Usá esta IP para configurar la restricción de IP en tu API key de Binance.
+    """
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        try:
+            resp = await client.get("https://api.ipify.org?format=json")
+            data = resp.json()
+            return {"server_ip": data["ip"]}
+        except Exception:
+            raise HTTPException(
+                status_code=502,
+                detail="No se pudo obtener la IP pública del servidor",
+            )
 
 
 # ── Auto-only preference ──────────────────────────────────────────────
