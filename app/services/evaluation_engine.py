@@ -282,21 +282,27 @@ async def _evaluate_recipe(recipe: Recipe, db: Session, enabled_keys: set[str] |
             if current_px > 0:
                 backfill_outcomes(db, recipe.symbol, current_px)
             _market_data["past_outcomes"] = get_recent_outcomes(db, recipe.symbol)
-            # Read Anthropic key: prefer per-user encrypted key, fallback to env var
+            # Read AI provider keys: prefer per-user encrypted key, fallback to env var
             _anthropic_key = ""
+            _groq_key = ""
             try:
                 from app.auth.encryption import decrypt
                 from app.models import User as _User
                 _owner = db.get(_User, recipe.user_id)
-                enc = getattr(_owner, "anthropic_api_key_enc", "") or "" if _owner else ""
-                if enc:
-                    _anthropic_key = decrypt(enc)
+                if _owner:
+                    enc_a = getattr(_owner, "anthropic_api_key_enc", "") or ""
+                    if enc_a:
+                        _anthropic_key = decrypt(enc_a)
+                    enc_g = getattr(_owner, "groq_api_key_enc", "") or ""
+                    if enc_g:
+                        _groq_key = decrypt(enc_g)
             except Exception as _e:
-                logger.debug("Could not read user Anthropic key: %s", _e)
+                logger.debug("Could not read user AI keys: %s", _e)
             if not _anthropic_key:
                 from app.config import get_settings as _gs
                 _anthropic_key = _gs().anthropic_api_key
             _market_data["anthropic_api_key"] = _anthropic_key
+            _market_data["groq_api_key"] = _groq_key
         except Exception as exc:
             logger.warning("Pre-fetch for Strategy M failed: %s", exc)
             _market_data = None

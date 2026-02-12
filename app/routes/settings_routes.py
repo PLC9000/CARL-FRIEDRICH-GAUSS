@@ -217,6 +217,90 @@ def delete_anthropic_key(
     return {"detail": "API key de Anthropic eliminada"}
 
 
+# ── Groq API key ─────────────────────────────────────────────────────
+
+@router.post("/groq", summary="Guardar API key de Groq")
+def save_groq_key(
+    body: dict,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Guarda la API key de Groq encriptada para la estrategia IA (gratis)."""
+    key = (body.get("api_key") or "").strip()
+    if not key:
+        raise HTTPException(status_code=422, detail="API key vacía")
+    user.groq_api_key_enc = encrypt(key)
+    db.add(AuditLog(
+        user_id=user.id,
+        action="settings.groq_key_saved",
+        payload={"key_hint": key[:8] + "..."},
+    ))
+    db.commit()
+    return {"configured": True, "key_hint": key[:8] + "..."}
+
+
+@router.get("/groq", summary="Estado de API key de Groq")
+def get_groq_key(user: User = Depends(get_current_user)):
+    """Devuelve si la API key de Groq está configurada."""
+    enc = getattr(user, "groq_api_key_enc", "") or ""
+    if not enc:
+        return {"configured": False, "key_hint": ""}
+    try:
+        raw = decrypt(enc)
+        return {"configured": True, "key_hint": raw[:8] + "..." if len(raw) >= 8 else "***"}
+    except Exception:
+        return {"configured": True, "key_hint": "error"}
+
+
+@router.post("/groq/test", summary="Testear API key de Groq")
+async def test_groq_key(user: User = Depends(get_current_user)):
+    """Hace una llamada mínima a la API de Groq para verificar que la key funciona."""
+    enc = getattr(user, "groq_api_key_enc", "") or ""
+    if not enc:
+        raise HTTPException(status_code=400, detail="No hay API key de Groq configurada")
+    try:
+        key = decrypt(enc)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error desencriptando la key")
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "max_tokens": 10,
+                    "messages": [{"role": "user", "content": "ping"}],
+                },
+            )
+        if resp.status_code == 200:
+            return {"ok": True, "detail": "API key de Groq válida"}
+        body = resp.json()
+        msg = body.get("error", {}).get("message", resp.text[:200])
+        raise HTTPException(status_code=resp.status_code, detail=msg)
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Error de conexión: {exc}")
+
+
+@router.delete("/groq", summary="Eliminar API key de Groq")
+def delete_groq_key(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Elimina la API key de Groq."""
+    user.groq_api_key_enc = ""
+    db.add(AuditLog(
+        user_id=user.id,
+        action="settings.groq_key_deleted",
+        payload={},
+    ))
+    db.commit()
+    return {"detail": "API key de Groq eliminada"}
+
+
 # ── Auto-only preference ──────────────────────────────────────────────
 
 @router.get("/auto-only", summary="Estado de modo Solo Automáticas")

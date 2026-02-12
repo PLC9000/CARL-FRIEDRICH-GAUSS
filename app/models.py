@@ -38,6 +38,8 @@ class User(Base):
     binance_api_secret_enc = Column(Text, default="")
     # Anthropic API key (encrypted at rest)
     anthropic_api_key_enc = Column(Text, default="")
+    # Groq API key (encrypted at rest)
+    groq_api_key_enc = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     recommendations = relationship("Recommendation", back_populates="user")

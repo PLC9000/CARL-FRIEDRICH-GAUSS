@@ -1,10 +1,14 @@
 """
-Strategy M — Claude AI (Pure Market Analysis).
+Strategy M — AI Analysis (Pure Market Analysis).
 
-Sends raw market data to Anthropic's Claude API and receives a structured
-trading signal.  No traditional technical indicators are computed; the model
-analyses price series, log returns, volume, order-book depth, and temporal
-features directly.
+Sends raw market data to an AI provider (Anthropic Claude or Groq) and
+receives a structured trading signal.  No traditional technical indicators
+are computed; the model analyses price series, log returns, volume,
+order-book depth, and temporal features directly.
+
+Supported providers:
+  - claude: Anthropic Claude (Haiku, Sonnet)
+  - groq:   Groq (Llama 3.3 70B, free tier 30 RPM)
 
 Three outputs:
   direction  (-100 to +100) → recommendation + confidence
@@ -33,7 +37,9 @@ logger = logging.getLogger(__name__)
 # ── Default parameters ────────────────────────────────────────────────────────
 
 DEFAULTS: dict[str, Any] = {
+    "provider": "claude",  # "claude" | "groq"
     "claude_model": "claude-haiku-4-5-20251001",
+    "groq_model": "llama-3.3-70b-versatile",
     "temperature": 0.2,
     "max_tokens": 512,
     "lookback_candles": 50,
@@ -315,6 +321,37 @@ def _call_claude_sync(
     return data["content"][0]["text"]
 
 
+# ── Groq API call (sync, via httpx — OpenAI-compatible) ──────────────────────
+
+def _call_groq_sync(
+    api_key: str,
+    model: str,
+    prompt: str,
+    temperature: float = 0.2,
+    max_tokens: int = 512,
+) -> str:
+    """Synchronous POST to the Groq Chat Completions API (OpenAI-compatible)."""
+    import httpx
+
+    resp = httpx.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": [{"role": "user", "content": prompt}],
+        },
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data["choices"][0]["message"]["content"]
+
+
 # ── Response parsing ──────────────────────────────────────────────────────────
 
 def _parse_claude_response(text: str) -> dict | None:
@@ -371,10 +408,17 @@ def run_strategy_m(candles: np.ndarray, params: dict | None = None) -> dict:
 
     # Extract injected market data
     market_data: dict = p.get("_market_data", {})
-    api_key: str = market_data.get("anthropic_api_key", "") or ""
+    provider = str(p.get("provider", "claude")).lower()
 
-    if not api_key:
-        return no_trade("No se configuró la API key de Anthropic (ANTHROPIC_API_KEY)")
+    # Resolve API key based on provider
+    if provider == "groq":
+        api_key = market_data.get("groq_api_key", "") or ""
+        if not api_key:
+            return no_trade("No se configuró la API key de Groq (Settings → Groq)")
+    else:
+        api_key = market_data.get("anthropic_api_key", "") or ""
+        if not api_key:
+            return no_trade("No se configuró la API key de Anthropic (Settings → Anthropic)")
 
     # Prepare features
     lookback = int(p["lookback_candles"])
@@ -397,24 +441,35 @@ def run_strategy_m(candles: np.ndarray, params: dict | None = None) -> dict:
     prompt = _format_prompt(symbol, price_features, depth_features,
                             ticker_features, past_outcomes)
 
-    # Call Claude
+    # Call AI provider
     try:
-        response_text = _call_claude_sync(
-            api_key=api_key,
-            model=str(p["claude_model"]),
-            prompt=prompt,
-            temperature=float(p["temperature"]),
-            max_tokens=int(p["max_tokens"]),
-        )
+        if provider == "groq":
+            model_name = str(p.get("groq_model", "llama-3.3-70b-versatile"))
+            response_text = _call_groq_sync(
+                api_key=api_key,
+                model=model_name,
+                prompt=prompt,
+                temperature=float(p["temperature"]),
+                max_tokens=int(p["max_tokens"]),
+            )
+        else:
+            model_name = str(p.get("claude_model", "claude-haiku-4-5-20251001"))
+            response_text = _call_claude_sync(
+                api_key=api_key,
+                model=model_name,
+                prompt=prompt,
+                temperature=float(p["temperature"]),
+                max_tokens=int(p["max_tokens"]),
+            )
     except Exception as exc:
-        logger.warning("Claude API error: %s", exc)
-        return no_trade(f"Error en la API de Claude: {exc}")
+        logger.warning("%s API error: %s", provider.capitalize(), exc)
+        return no_trade(f"Error en la API de {provider.capitalize()}: {exc}")
 
     # Parse response
     parsed = _parse_claude_response(response_text)
     if parsed is None:
-        logger.warning("Unparseable Claude response: %s", response_text[:200])
-        return no_trade("No se pudo interpretar la respuesta de Claude")
+        logger.warning("Unparseable %s response: %s", provider, response_text[:200])
+        return no_trade(f"No se pudo interpretar la respuesta de {provider.capitalize()}")
 
     direction = parsed["direction"]
     intensity = parsed["intensity"]
@@ -449,7 +504,7 @@ def run_strategy_m(candles: np.ndarray, params: dict | None = None) -> dict:
         "stop_loss": sl,
         "take_profit": tp,
         "explanation": (
-            f"Claude AI ({p['claude_model']}): dirección={direction:+d}, "
+            f"AI ({provider}/{model_name}): dirección={direction:+d}, "
             f"intensidad={intensity}, confianza_IA={ai_confidence}%. "
             f"{reasoning[:300]}"
         ),
@@ -457,7 +512,8 @@ def run_strategy_m(candles: np.ndarray, params: dict | None = None) -> dict:
             "direction": direction,
             "intensity": intensity,
             "ai_confidence": ai_confidence,
-            "model": str(p["claude_model"]),
+            "provider": provider,
+            "model": model_name,
             "reasoning": reasoning,
             "depth_available": depth_features is not None,
             "ticker_24hr_available": ticker_features is not None,

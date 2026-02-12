@@ -524,31 +524,46 @@ STRATEGY_REGISTRY = {
     },
     "M": {
         "key": "M",
-        "name": "Claude AI (Analisis Puro)",
+        "name": "IA (Analisis Puro)",
         "icon": "\U0001f9e0",
         "category": "Inteligencia Artificial",
-        "short_desc": "IA de Anthropic analiza datos crudos del mercado sin indicadores tecnicos tradicionales.",
+        "short_desc": "IA analiza datos crudos del mercado sin indicadores tecnicos tradicionales. Soporta Claude (pago) y Groq/Llama (gratis).",
         "long_desc": (
             "Esta estrategia es completamente diferente a todas las demas: NO usa "
             "indicadores tecnicos (ni EMA, ni RSI, ni MACD, ni nada). En su lugar, "
             "envia los datos CRUDOS del mercado (precios, volumenes, libro de ordenes, "
-            "estadisticas de 24h) directamente a Claude, la IA de Anthropic, y le pide "
+            "estadisticas de 24h) directamente a un modelo de IA, y le pide "
             "que analice patrones, anomalias y dinamicas que un indicador clasico no "
-            "detectaria. Claude produce tres senales: Direccion (-100 a +100, que tan "
+            "detectaria. La IA produce tres senales: Direccion (-100 a +100, que tan "
             "alcista o bajista ve el mercado), Intensidad (0-100, que tan fuerte es el "
             "movimiento esperado) y Confianza (0-100, que tan segura esta la IA). "
             "Ademas, APRENDE de sus predicciones pasadas: cada vez que evalua, ve su "
             "historial reciente con los resultados reales, lo que le permite ajustar "
-            "sus estimaciones en tiempo real (in-context learning)."
+            "sus estimaciones en tiempo real (in-context learning).\n\n"
+            "Proveedores disponibles:\n"
+            "- Claude (Anthropic): modelos premium, excelente razonamiento. Requiere API key de pago.\n"
+            "- Groq (Llama 3.3 70B): GRATIS, 30 requests/min. Obtene tu key en console.groq.com sin tarjeta de credito."
         ),
         "when_works": "Cuando el mercado tiene patrones sutiles que los indicadores clasicos no capturan: anomalias de volumen, cambios en la microestructura del order book, correlaciones temporales inusuales. Ideal como complemento de estrategias tecnicas para agregar una perspectiva diferente.",
-        "when_fails": "En mercados extremadamente erraticos o con muy pocos datos historicos. Tambien depende de la disponibilidad de la API de Anthropic (si el servicio esta caido, retorna NO-TRADE). El costo de la API es un factor a considerar en evaluaciones muy frecuentes.",
-        "example": "Claude analiza 50 velas de BTC/USDT, ve que el volumen esta aumentando mientras el precio esta lateral, el order book tiene mas bids que asks, y en sus ultimas 3 predicciones acerto la direccion. Produce: direction=+55, intensity=70, confidence=75, recomendando COMPRAR con confianza 55%.",
+        "when_fails": "En mercados extremadamente erraticos o con muy pocos datos historicos. Tambien depende de la disponibilidad de la API del proveedor (si el servicio esta caido, retorna NO-TRADE). Con Groq (gratis) hay limite de 30 requests/min.",
+        "example": "La IA analiza 50 velas de BTC/USDT, ve que el volumen esta aumentando mientras el precio esta lateral, el order book tiene mas bids que asks, y en sus ultimas 3 predicciones acerto la direccion. Produce: direction=+55, intensity=70, confidence=75, recomendando COMPRAR con confianza 55%.",
         "default_params": {
+            "provider": {
+                "value": "groq",
+                "options": ["groq", "claude"],
+                "desc": "Proveedor de IA para el analisis.",
+                "tip": "Groq es GRATIS (usa Llama 3.3 70B, 30 req/min). Claude es de pago pero con mejor razonamiento. Empeza con Groq para probar sin costo.",
+            },
+            "groq_model": {
+                "value": "llama-3.3-70b-versatile",
+                "options": ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"],
+                "desc": "Modelo de Groq a usar (solo aplica si provider=groq).",
+                "tip": "llama-3.3-70b es el mas inteligente (gratis, recomendado). llama-3.1-8b es mas rapido pero menos preciso. mixtral-8x7b es otra alternativa solida.",
+            },
             "claude_model": {
                 "value": "claude-haiku-4-5-20251001",
                 "options": ["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
-                "desc": "Modelo de Claude a usar para el analisis.",
+                "desc": "Modelo de Claude a usar (solo aplica si provider=claude).",
                 "tip": "Haiku es rapido y barato (~$0.0005/llamada). Sonnet es mas inteligente pero 20x mas caro (~$0.01/llamada). Empeza con Haiku.",
             },
             "temperature": {
@@ -574,12 +589,12 @@ STRATEGY_REGISTRY = {
             "history_window": {
                 "value": 10, "min": 0, "max": 30,
                 "desc": "Cuantas predicciones pasadas (con sus resultados) se incluyen para aprendizaje.",
-                "tip": "10 es un buen balance. Con 0 desactivas el aprendizaje (cada evaluacion es independiente). Con 20-30 Claude tiene mas contexto historico pero el prompt es mas largo.",
+                "tip": "10 es un buen balance. Con 0 desactivas el aprendizaje (cada evaluacion es independiente). Con 20-30 la IA tiene mas contexto historico pero el prompt es mas largo.",
             },
             "direction_deadzone": {
                 "value": 10, "min": 0, "max": 50,
                 "desc": "Zona muerta: si |direccion| < este valor, la estrategia dice ESPERAR.",
-                "tip": "Con 10, Claude necesita estar al menos 10% seguro de una direccion para generar senal. Con 0 siempre genera senal. Con 30+ solo opera con direcciones muy claras.",
+                "tip": "Con 10, la IA necesita estar al menos 10% segura de una direccion para generar senal. Con 0 siempre genera senal. Con 30+ solo opera con direcciones muy claras.",
             },
         },
     },

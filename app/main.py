@@ -81,6 +81,8 @@ async def lifespan(_app: FastAPI):
             conn.execute(text("ALTER TABLE users ADD COLUMN auto_only BOOLEAN NOT NULL DEFAULT 0"))
         if "anthropic_api_key_enc" not in user_cols:
             conn.execute(text("ALTER TABLE users ADD COLUMN anthropic_api_key_enc TEXT DEFAULT ''"))
+        if "groq_api_key_enc" not in user_cols:
+            conn.execute(text("ALTER TABLE users ADD COLUMN groq_api_key_enc TEXT DEFAULT ''"))
         conn.commit()
     from app.database import SessionLocal
     from app.services.setup_service import seed_strategy_configs

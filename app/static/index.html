@@ -844,7 +844,7 @@ body{font-size:13px}
     <div id="permissionsSection"></div>
     <!-- Anthropic API Key -->
     <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
-      <div style="font-weight:700;font-size:.82rem;margin-bottom:8px">&#129504; Claude AI (Estrategia M)</div>
+      <div style="font-weight:700;font-size:.82rem;margin-bottom:8px">&#129504; Claude AI (Estrategia M — pago)</div>
       <div id="anthropicStatus" style="margin-bottom:8px;font-size:.72rem"></div>
       <div class="form-group">
         <label>API Key de Anthropic<span class="hint">Obt&eacute;n tu key en console.anthropic.com</span></label>
@@ -854,6 +854,20 @@ body{font-size:13px}
         <button class="btn btn-primary btn-sm" onclick="saveAnthropicKey()">Guardar</button>
         <button class="btn btn-outline btn-sm" id="btnTestAnthropic" onclick="testAnthropicKey()" style="display:none">Testear</button>
         <button class="btn btn-outline btn-sm" onclick="deleteAnthropicKey()" style="border-color:var(--sell);color:var(--sell)">Eliminar</button>
+      </div>
+    </div>
+    <!-- Groq API Key (free) -->
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-weight:700;font-size:.82rem;margin-bottom:8px">&#9889; Groq / Llama (Estrategia M — gratis)</div>
+      <div id="groqStatus" style="margin-bottom:8px;font-size:.72rem"></div>
+      <div class="form-group">
+        <label>API Key de Groq<span class="hint">Gratis en console.groq.com (sin tarjeta de cr&eacute;dito)</span></label>
+        <input type="password" id="cfgGroqKey" placeholder="gsk_...">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" onclick="saveGroqKey()">Guardar</button>
+        <button class="btn btn-outline btn-sm" id="btnTestGroq" onclick="testGroqKey()" style="display:none">Testear</button>
+        <button class="btn btn-outline btn-sm" onclick="deleteGroqKey()" style="border-color:var(--sell);color:var(--sell)">Eliminar</button>
       </div>
     </div>
   </div>
@@ -1312,7 +1326,7 @@ async function loadBinanceStatus(){
     if(!r.configured)document.getElementById('permissionsSection').innerHTML='';
   }catch(e){USER.hasKeys=false}
 }
-function openSettings(){document.getElementById('settingsModal').classList.add('show');loadBinanceStatus();loadServerIp();loadAnthropicStatus()}
+function openSettings(){document.getElementById('settingsModal').classList.add('show');loadBinanceStatus();loadServerIp();loadAnthropicStatus();loadGroqStatus()}
 function closeSettings(){document.getElementById('settingsModal').classList.remove('show')}
 async function loadServerIp(){
   try{const r=await api('GET','/settings/server-ip');
@@ -1368,6 +1382,35 @@ async function testAnthropicKey(){
   var btn=document.getElementById('btnTestAnthropic');btn.disabled=true;btn.textContent='Testeando...';
   try{await api('POST','/settings/anthropic/test');
     toast('API key de Anthropic v\u00e1lida \u2714','success');
+  }catch(e){toast('Test fall\u00f3: '+e.message,'error');}
+  btn.disabled=false;btn.textContent='Testear';
+}
+/* Groq API key functions */
+async function loadGroqStatus(){
+  try{const r=await api('GET','/settings/groq');
+    document.getElementById('groqStatus').innerHTML=r.configured
+      ?'<span class="badge badge-keys" style="background:rgba(250,204,21,.12);color:#facc15">Configurado: '+r.key_hint+'</span>'
+      :'<span style="color:var(--muted);font-size:.72rem">Sin API key configurada &mdash; <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">Obtener gratis</a></span>';
+    document.getElementById('btnTestGroq').style.display=r.configured?'inline-flex':'none';
+  }catch(e){}
+}
+async function saveGroqKey(){
+  const k=document.getElementById('cfgGroqKey').value.trim();
+  if(!k)return toast('Ingresa la API key de Groq','error');
+  try{await api('POST','/settings/groq',{api_key:k});
+    document.getElementById('cfgGroqKey').value='';
+    await loadGroqStatus();toast('API key de Groq guardada','success');
+  }catch(e){toast('Error guardando key: '+e.message,'error')}
+}
+async function deleteGroqKey(){
+  try{await api('DELETE','/settings/groq');
+    await loadGroqStatus();toast('API key de Groq eliminada','success');
+  }catch(e){toast('Error: '+e.message,'error')}
+}
+async function testGroqKey(){
+  var btn=document.getElementById('btnTestGroq');btn.disabled=true;btn.textContent='Testeando...';
+  try{await api('POST','/settings/groq/test');
+    toast('API key de Groq v\u00e1lida \u2714','success');
   }catch(e){toast('Test fall\u00f3: '+e.message,'error');}
   btn.disabled=false;btn.textContent='Testear';
 }
