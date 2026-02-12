@@ -1787,7 +1787,7 @@ async function saveRecipe(){
   if(autoThPct>0&&(autoThPct<buyThPct||autoThPct<sellThPct))return toast('El umbral de auto-aprobacion debe ser >= que los umbrales de compra y venta','error');
   if((_selectedMode||'roles')==='roles'){
     var hasStrength=strategies.some(function(s){return s.role==='strength'});
-    if((strengthThPct>0||autoStrThPct>0)&&!hasStrength)return toast('Configuraste umbrales de fuerza pero ninguna estrategia tiene rol "Fuerza". Cambiá el rol de al menos una a "Fuerza"','error');
+    if((strengthThPct>0||autoStrThPct>0)&&!hasStrength){strengthThPct=0;autoStrThPct=0;}
   }
   if(isNaN(maxPct)||maxPct<0.1||maxPct>100)return toast('Max orden % debe estar entre 0.1 y 100','error');
   if(isNaN(slPct)||slPct<0.1||slPct>50)return toast('Stop-Loss % debe estar entre 0.1 y 50','error');
