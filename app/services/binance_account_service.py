@@ -3,10 +3,9 @@
 import logging
 import time
 
-import httpx
-
 from app.auth.encryption import decrypt
 from app.config import get_settings
+from app.services.http_client import get_client
 from app.services.binance_sign import signed_query as _signed_query
 
 logger = logging.getLogger(__name__)
@@ -28,17 +27,17 @@ async def get_spot_balances(
     settings = get_settings()
     url = f"{settings.binance_base_url}/api/v3/account"
     qs = _signed_query(params, api_secret)
+    client = get_client()
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.get(
-            f"{url}?{qs}",
-            headers={"X-MBX-APIKEY": api_key},
-        )
-        data = resp.json()
-        if resp.status_code != 200:
-            msg = data.get("msg", str(data))
-            code = data.get("code", resp.status_code)
-            raise RuntimeError(f"Binance error {code}: {msg}")
+    resp = await client.get(
+        f"{url}?{qs}",
+        headers={"X-MBX-APIKEY": api_key},
+    )
+    data = resp.json()
+    if resp.status_code != 200:
+        msg = data.get("msg", str(data))
+        code = data.get("code", resp.status_code)
+        raise RuntimeError(f"Binance error {code}: {msg}")
 
     want = {a.upper() for a in assets}
     balances_list = data.get("balances", [])
@@ -66,15 +65,15 @@ async def get_api_permissions(api_key_enc: str, api_secret_enc: str) -> dict:
     settings = get_settings()
     url = f"{settings.binance_base_url}/sapi/v1/account/apiRestrictions"
     qs = _signed_query(params, api_secret)
+    client = get_client()
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.get(
-            f"{url}?{qs}",
-            headers={"X-MBX-APIKEY": api_key},
-        )
-        data = resp.json()
-        if resp.status_code != 200:
-            msg = data.get("msg", str(data))
-            code = data.get("code", resp.status_code)
-            raise RuntimeError(f"Binance error {code}: {msg}")
-        return data
+    resp = await client.get(
+        f"{url}?{qs}",
+        headers={"X-MBX-APIKEY": api_key},
+    )
+    data = resp.json()
+    if resp.status_code != 200:
+        msg = data.get("msg", str(data))
+        code = data.get("code", resp.status_code)
+        raise RuntimeError(f"Binance error {code}: {msg}")
+    return data

@@ -12,10 +12,9 @@ and NOTIONAL constraints are always satisfied.
 import logging
 import time
 
-import httpx
-
 from app.auth.encryption import decrypt
 from app.config import get_settings
+from app.services.http_client import get_client
 from app.services.binance_filters import (
     get_symbol_filters,
     round_step,
@@ -41,15 +40,15 @@ async def _signed_post(api_key: str, api_secret: str, endpoint: str, params: dic
     qs = _signed_params(params, api_secret)
     full_url = f"{url}?{qs}"
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.post(full_url, headers=_base_headers(api_key))
-        data = resp.json()
-        if resp.status_code != 200:
-            logger.error("Binance %s error %d: %s", endpoint, resp.status_code, data)
-            msg = data.get("msg", str(data))
-            code = data.get("code", resp.status_code)
-            raise RuntimeError(f"Binance error {code}: {msg}")
-        return data
+    client = get_client()
+    resp = await client.post(full_url, headers=_base_headers(api_key))
+    data = resp.json()
+    if resp.status_code != 200:
+        logger.error("Binance %s error %d: %s", endpoint, resp.status_code, data)
+        msg = data.get("msg", str(data))
+        code = data.get("code", resp.status_code)
+        raise RuntimeError(f"Binance error {code}: {msg}")
+    return data
 
 
 # ── Market Order ─────────────────────────────────────────────────────────────
@@ -164,15 +163,15 @@ async def _signed_get(api_key: str, api_secret: str, endpoint: str, params: dict
     qs = _signed_params(params, api_secret)
     full_url = f"{url}?{qs}"
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.get(full_url, headers=_base_headers(api_key))
-        data = resp.json()
-        if resp.status_code != 200:
-            logger.error("Binance GET %s error %d: %s", endpoint, resp.status_code, data)
-            msg = data.get("msg", str(data))
-            code = data.get("code", resp.status_code)
-            raise RuntimeError(f"Binance error {code}: {msg}")
-        return data
+    client = get_client()
+    resp = await client.get(full_url, headers=_base_headers(api_key))
+    data = resp.json()
+    if resp.status_code != 200:
+        logger.error("Binance GET %s error %d: %s", endpoint, resp.status_code, data)
+        msg = data.get("msg", str(data))
+        code = data.get("code", resp.status_code)
+        raise RuntimeError(f"Binance error {code}: {msg}")
+    return data
 
 
 # ── OCO Order (new endpoint: /api/v3/orderList/oco) ─────────────────────────
@@ -328,15 +327,15 @@ async def _signed_delete(api_key: str, api_secret: str, endpoint: str, params: d
     qs = _signed_params(params, api_secret)
     full_url = f"{url}?{qs}"
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.delete(full_url, headers=_base_headers(api_key))
-        data = resp.json()
-        if resp.status_code != 200:
-            logger.error("Binance DELETE %s error %d: %s", endpoint, resp.status_code, data)
-            msg = data.get("msg", str(data))
-            code = data.get("code", resp.status_code)
-            raise RuntimeError(f"Binance error {code}: {msg}")
-        return data
+    client = get_client()
+    resp = await client.delete(full_url, headers=_base_headers(api_key))
+    data = resp.json()
+    if resp.status_code != 200:
+        logger.error("Binance DELETE %s error %d: %s", endpoint, resp.status_code, data)
+        msg = data.get("msg", str(data))
+        code = data.get("code", resp.status_code)
+        raise RuntimeError(f"Binance error {code}: {msg}")
+    return data
 
 
 async def cancel_order(

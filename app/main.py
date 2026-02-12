@@ -21,6 +21,7 @@ from app.routes.strategy_routes import router as strategy_router
 from app.routes.setup_routes import router as setup_router
 from app.routes.marketplace_routes import router as marketplace_router
 from app.services.evaluation_engine import start_engine, stop_engine
+from app.services.http_client import start_client, stop_client
 
 # ── Logging ─────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -86,9 +87,11 @@ async def lifespan(_app: FastAPI):
         seed_strategy_configs(db)
     finally:
         db.close()
+    await start_client()
     await start_engine()
     yield
     await stop_engine()
+    await stop_client()
 
 
 # ── App ─────────────────────────────────────────────────────────────────────

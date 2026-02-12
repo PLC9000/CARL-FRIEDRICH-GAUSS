@@ -1,4 +1,3 @@
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -8,6 +7,7 @@ from app.schemas import BinanceConfigRequest, BinanceConfigOut
 from app.auth.dependencies import get_current_user
 from app.auth.encryption import encrypt, decrypt
 from app.services.binance_account_service import get_api_permissions
+from app.services.http_client import get_client
 
 router = APIRouter(prefix="/settings", tags=["Configuración"])
 
@@ -119,16 +119,16 @@ async def get_server_ip(
 
     Usá esta IP para configurar la restricción de IP en tu API key de Binance.
     """
-    async with httpx.AsyncClient(timeout=5.0) as client:
-        try:
-            resp = await client.get("https://api.ipify.org?format=json")
-            data = resp.json()
-            return {"server_ip": data["ip"]}
-        except Exception:
-            raise HTTPException(
-                status_code=502,
-                detail="No se pudo obtener la IP pública del servidor",
-            )
+    try:
+        client = get_client()
+        resp = await client.get("https://api.ipify.org?format=json")
+        data = resp.json()
+        return {"server_ip": data["ip"]}
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo obtener la IP pública del servidor",
+        )
 
 
 # ── Auto-only preference ──────────────────────────────────────────────

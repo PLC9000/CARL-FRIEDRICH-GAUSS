@@ -1,6 +1,6 @@
 import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, Boolean, DateTime, Text, Enum as SAEnum,
+    Column, Index, Integer, String, Float, Boolean, DateTime, Text, Enum as SAEnum,
     ForeignKey, JSON,
 )
 from sqlalchemy.orm import relationship
@@ -82,6 +82,9 @@ class Approval(Base):
 
 class TradeExecution(Base):
     __tablename__ = "trade_executions"
+    __table_args__ = (
+        Index("ix_trades_user_status", "executed_by", "status"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     approval_id = Column(Integer, ForeignKey("approvals.id"), nullable=False, index=True)
@@ -113,6 +116,10 @@ class AuditLog(Base):
 
 class Recipe(Base):
     __tablename__ = "recipes"
+    __table_args__ = (
+        Index("ix_recipes_user_status", "user_id", "status"),
+        Index("ix_recipes_last_eval", "last_evaluated_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -155,6 +162,9 @@ class Recipe(Base):
 
 class RecipeEvaluation(Base):
     __tablename__ = "recipe_evaluations"
+    __table_args__ = (
+        Index("ix_eval_recipe_time", "recipe_id", "evaluated_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)
@@ -175,6 +185,9 @@ class RecipeEvaluation(Base):
 
 class BacktestResult(Base):
     __tablename__ = "backtest_results"
+    __table_args__ = (
+        Index("ix_backtest_recipe_status", "recipe_id", "status"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False, index=True)

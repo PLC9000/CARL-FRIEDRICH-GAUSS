@@ -24,16 +24,16 @@ import time
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 from typing import Any
 
-import httpx
-
 from app.config import get_settings
+from app.services.http_client import get_client
 
 logger = logging.getLogger(__name__)
 
-# ── In-memory cache (symbol → filters) with TTL ─────────────────────────────
+# ── In-memory cache (symbol → filters) with TTL + max size ───────────────────
 
 _cache: dict[str, tuple[float, dict]] = {}   # symbol → (expiry_ts, filters)
-_CACHE_TTL = 300  # 5 minutes
+_CACHE_TTL = 300   # 5 minutes
+_CACHE_MAX = 100   # max symbols cached; evict oldest on overflow
 
 
 # ── Public helpers ───────────────────────────────────────────────────────────
@@ -91,14 +91,14 @@ async def get_symbol_filters(symbol: str) -> dict:
             return cached
 
     settings = get_settings()
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.get(
-            f"{settings.binance_base_url}/api/v3/exchangeInfo",
-            params={"symbol": symbol},
-        )
-        if resp.status_code != 200:
-            raise RuntimeError(f"No se pudo obtener filtros para {symbol}")
-        data = resp.json()
+    client = get_client()
+    resp = await client.get(
+        f"{settings.binance_base_url}/api/v3/exchangeInfo",
+        params={"symbol": symbol},
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"No se pudo obtener filtros para {symbol}")
+    data = resp.json()
 
     sym_info = None
     for s in data.get("symbols", []):
@@ -109,6 +109,12 @@ async def get_symbol_filters(symbol: str) -> dict:
         raise RuntimeError(f"Símbolo {symbol} no encontrado en Binance")
 
     filters = _parse_all_filters(sym_info)
+
+    # Evict oldest entries if cache is full
+    if len(_cache) >= _CACHE_MAX and symbol not in _cache:
+        oldest_key = min(_cache, key=lambda k: _cache[k][0])
+        del _cache[oldest_key]
+
     _cache[symbol] = (now + _CACHE_TTL, filters)
     return filters
 
@@ -145,17 +151,29 @@ def _parse_all_filters(sym_info: dict) -> dict:
 
 # ── Price helper (for market notional check) ─────────────────────────────────
 
+_price_cache: dict[str, tuple[float, float]] = {}  # symbol → (expiry_ts, price)
+_PRICE_CACHE_TTL = 2  # seconds — avoid repeated calls in the same evaluation cycle
+
+
 async def _get_current_price(symbol: str) -> float:
-    """GET /api/v3/ticker/price for the symbol."""
+    """GET /api/v3/ticker/price for the symbol (cached 2s)."""
+    now = time.time()
+    if symbol in _price_cache:
+        expiry, cached_price = _price_cache[symbol]
+        if now < expiry:
+            return cached_price
+
     settings = get_settings()
-    async with httpx.AsyncClient(timeout=8.0) as client:
-        resp = await client.get(
-            f"{settings.binance_base_url}/api/v3/ticker/price",
-            params={"symbol": symbol},
-        )
-        if resp.status_code != 200:
-            raise RuntimeError(f"No se pudo obtener precio de {symbol}")
-        return float(resp.json()["price"])
+    client = get_client()
+    resp = await client.get(
+        f"{settings.binance_base_url}/api/v3/ticker/price",
+        params={"symbol": symbol},
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"No se pudo obtener precio de {symbol}")
+    price = float(resp.json()["price"])
+    _price_cache[symbol] = (now + _PRICE_CACHE_TTL, price)
+    return price
 
 
 # ── Core validation ──────────────────────────────────────────────────────────
@@ -338,5 +356,6 @@ async def validate_and_adjust_order(
 
 
 def clear_cache():
-    """Clear the filter cache (useful in tests)."""
+    """Clear the filter and price caches (useful in tests)."""
     _cache.clear()
+    _price_cache.clear()

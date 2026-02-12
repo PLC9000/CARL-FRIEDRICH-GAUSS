@@ -3672,10 +3672,30 @@ function stopAutoSync(){
   var btn=document.getElementById('syncAutoBtn');if(btn)btn.classList.remove('active');
   var lbl=document.getElementById('syncStatus');if(lbl)lbl.textContent='';
 }
-/* Re-sync when tab becomes visible again (after screen off / tab switch) */
+/* ── Visibility change: pause/resume ALL timers when tab hidden/visible ── */
+var _pausedTimers={clock:false,elapsed:false,opsElapsed:false,sync:false,notif:false};
 document.addEventListener('visibilitychange',function(){
-  if(!document.hidden&&TOKEN&&currentTab==='operations'){
-    loadOperations();
+  if(document.hidden){
+    /* Pause all active timers */
+    if(_clockTimer){_stopClock();_pausedTimers.clock=true}
+    if(_elapsedTimer){_stopElapsedTimer();_pausedTimers.elapsed=true}
+    if(_opsElapsedTimer){_stopOpsElapsedTimer();_pausedTimers.opsElapsed=true}
+    if(_syncTimer){clearInterval(_syncTimer);_syncTimer=null;_pausedTimers.sync=true}
+    if(_notifInterval){clearInterval(_notifInterval);_notifInterval=null;_pausedTimers.notif=true}
+    stopAllTracking();
+    Object.keys(_chartTimers).forEach(function(id){clearInterval(_chartTimers[id]);delete _chartTimers[id]});
+    Object.keys(_chartCountdowns).forEach(function(id){clearInterval(_chartCountdowns[id]);delete _chartCountdowns[id]});
+  } else if(TOKEN){
+    /* Resume paused timers */
+    if(_pausedTimers.clock){_startClock();_pausedTimers.clock=false}
+    if(_pausedTimers.elapsed){_startElapsedTimer();_pausedTimers.elapsed=false}
+    if(_pausedTimers.opsElapsed){_startOpsElapsedTimer();_pausedTimers.opsElapsed=false}
+    if(_pausedTimers.sync){startAutoSync();_pausedTimers.sync=false}
+    if(_pausedTimers.notif){startNotifPoller();_pausedTimers.notif=false}
+    /* Refresh current tab data */
+    if(currentTab==='operations')loadOperations();
+    else if(currentTab==='approvals')loadPendingApprovals();
+    else if(currentTab==='recipes')loadRecipes();
   }
 });
 

@@ -205,6 +205,8 @@ def _enrich_trade(trade: TradeExecution, rec) -> dict:
     summary="Operaciones enriquecidas",
 )
 def list_operations_enriched(
+    limit: int = 50,
+    offset: int = 0,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -214,6 +216,8 @@ def list_operations_enriched(
         db.query(TradeExecution)
         .filter(TradeExecution.executed_by == user.id)
         .order_by(TradeExecution.executed_at.desc())
+        .offset(offset)
+        .limit(min(limit, 200))
         .all()
     )
     approval_ids = [t.approval_id for t in trades]
@@ -239,15 +243,19 @@ def list_operations_enriched(
     summary="Ver operaciones",
 )
 def list_operations(
+    limit: int = 50,
+    offset: int = 0,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Devuelve todas las operaciones ejecutadas por el usuario actual,
+    """Devuelve las operaciones ejecutadas por el usuario actual,
     ordenadas de la más reciente a la más antigua."""
     trades = (
         db.query(TradeExecution)
         .filter(TradeExecution.executed_by == user.id)
         .order_by(TradeExecution.executed_at.desc())
+        .offset(offset)
+        .limit(min(limit, 200))
         .all()
     )
     return trades

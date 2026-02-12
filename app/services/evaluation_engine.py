@@ -185,14 +185,14 @@ async def _evaluate_due_recipes():
 
         enabled_keys = get_enabled_strategy_keys(db)
 
-        # Expire stale approvals ONCE per tick, not per recipe
-        _expire_stale_approvals(db)
-
         # Compute executed_ids ONCE per tick for reuse
         executed_ids = {
             row[0]
             for row in db.query(TradeExecution.approval_id).all()
         }
+
+        # Expire stale approvals ONCE per tick, reusing executed_ids
+        _expire_stale_approvals(db, executed_ids)
 
         # Batch-fetch auto_only flags for recipe owners
         user_ids = {r.user_id for r in recipes}
@@ -516,15 +516,15 @@ async def _evaluate_recipe(recipe: Recipe, db: Session, enabled_keys: set[str] |
     return final_score
 
 
-def _expire_stale_approvals(db: Session):
+def _expire_stale_approvals(db: Session, executed_ids: set | None = None):
     """Auto-reject pending and approved-not-executed approvals older than 30 min."""
     cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=30)
 
-    # IDs of approvals that already have a trade execution
-    executed_ids = {
-        row[0]
-        for row in db.query(TradeExecution.approval_id).all()
-    }
+    if executed_ids is None:
+        executed_ids = {
+            row[0]
+            for row in db.query(TradeExecution.approval_id).all()
+        }
 
     stale = (
         db.query(Approval)

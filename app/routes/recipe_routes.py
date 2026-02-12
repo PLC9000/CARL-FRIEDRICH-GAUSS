@@ -82,27 +82,38 @@ def list_my_recipes(
         for rid in recent_evals_map:
             recent_evals_map[rid] = recent_evals_map[rid][:50]
 
-    # Batch-compute ops_used for recipes with limits
+    # Batch-compute ops_used for recipes with limits (grouped by cutoff)
+    from sqlalchemy import func as sa_func
     import datetime as _dt
     ops_used_map: dict[int, int] = {}
-    limit_recipe_ids = [r.id for r in recipes if (r.max_ops_count or 0) > 0]
-    if limit_recipe_ids:
-        for rid in limit_recipe_ids:
-            _recipe = next(r for r in recipes if r.id == rid)
-            _cutoff = _dt.datetime.utcnow() - _dt.timedelta(hours=_recipe.max_ops_hours or 24.0)
-            cnt = (
-                db.query(TradeExecution)
-                .join(Approval, TradeExecution.approval_id == Approval.id)
-                .join(Recommendation, Approval.recommendation_id == Recommendation.id)
-                .join(RecipeEvaluation, RecipeEvaluation.recommendation_id == Recommendation.id)
+    limit_recipes = [r for r in recipes if (r.max_ops_count or 0) > 0]
+    if limit_recipes:
+        # Group recipes by max_ops_hours to minimize queries
+        by_hours: dict[float, list[int]] = {}
+        for r in limit_recipes:
+            h = r.max_ops_hours or 24.0
+            by_hours.setdefault(h, []).append(r.id)
+        now = _dt.datetime.utcnow()
+        for hours, rids in by_hours.items():
+            cutoff = now - _dt.timedelta(hours=hours)
+            rows = (
+                db.query(
+                    RecipeEvaluation.recipe_id,
+                    sa_func.count(TradeExecution.id),
+                )
+                .join(Recommendation, RecipeEvaluation.recommendation_id == Recommendation.id)
+                .join(Approval, Approval.recommendation_id == Recommendation.id)
+                .join(TradeExecution, TradeExecution.approval_id == Approval.id)
                 .filter(
-                    RecipeEvaluation.recipe_id == rid,
-                    TradeExecution.executed_at >= _cutoff,
+                    RecipeEvaluation.recipe_id.in_(rids),
+                    TradeExecution.executed_at >= cutoff,
                     TradeExecution.status.in_(["filled", "simulated"]),
                 )
-                .count()
+                .group_by(RecipeEvaluation.recipe_id)
+                .all()
             )
-            ops_used_map[rid] = cnt
+            for rid, cnt in rows:
+                ops_used_map[rid] = cnt
 
     results = []
     for r in recipes:
